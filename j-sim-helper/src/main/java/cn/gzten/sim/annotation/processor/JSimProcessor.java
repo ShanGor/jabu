@@ -12,19 +12,16 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.StringUtil;
-import org.eclipse.jetty.util.UrlEncoded;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
-import javax.lang.model.type.TypeMirror;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
+@SupportedSourceVersion(SourceVersion.RELEASE_19)
 @AutoService(Processor.class)
 public class JSimProcessor extends AbstractProcessor {
     private Filer filer;
@@ -107,109 +104,94 @@ public class JSimProcessor extends AbstractProcessor {
                         if (reqMapAnnotation != null) {
                             System.out.println("Found request mapping method: " + method.getSimpleName().toString());
 
-                            var codes = new LinkedList<CodeBlock>();
-                            // If http method list is empty, then supports all methods
-                            if (SimUtils.isEmpty(reqMapAnnotation.method()) ) {
-                                // TODO: add logic to process
+                            var methodParamParseResult = SimProcessorUtil.prepareMethodParameters(method.getParameters());
+
+                            var uniqueRouteEntry = reqMapAnnotation.path() + "." + RequestMethod.serializeArray(reqMapAnnotation.method());
+                            if (existingRoutes.contains(uniqueRouteEntry)) {
+                                var errMsg = "Duplicate route entry found: " + uniqueRouteEntry;
+                                System.err.println(errMsg);
+                                throw new RuntimeException(errMsg);
                             } else {
-                                var methodParams = method.getParameters();
+                                existingRoutes.add(uniqueRouteEntry);
+                            }
 
-                                var paramNames = new LinkedList<String>();
-                                var queryParamDefined = false;
-                                for (var p : methodParams){
-                                    var qp = p.getAnnotation(QueryParam.class);
-                                    var paramName = p.getSimpleName().toString();
-                                    if (qp != null) {
-                                        if (!queryParamDefined) {
-                                            codes.add(CodeBlock.of("var query = request.getHttpURI().getQuery();\n"));
-                                            codes.add(CodeBlock.of("var queryParams = $T.decodeQuery(query);\n", UrlEncoded.class));
-                                            queryParamDefined = true;
+                            // If http method list is empty, then supports all methods
+                            String templatePrefix;
+                            String templateSuffix;
+                            String blankPrefix;
+                            if (SimUtils.isEmpty(reqMapAnnotation.method()) ) {
+                                templatePrefix = """
+                                        // for $N.$N: $N
+                                        {
+                                          if ($T.matchPath(requestPath, $S, $L)) {
+                                          """;
+
+                                templateSuffix = """
+                                            return;
+                                          }
                                         }
-                                        if (StringUtil.isNotBlank(qp.value())) {
-                                            paramName = qp.value();
-                                        }
-                                        paramNames.add("_" + paramName);
+                                        """;
+                                blankPrefix = "    ";
 
-                                        SimProcessorUtil.doTypeMapping(codes, p, paramName, qp.required());
-
-                                        continue;
-                                    }
-                                    var pv = p.getAnnotation(PathVar.class);
-                                    if (pv != null) {
-                                        if (StringUtil.isNotBlank(pv.value())) {
-                                            paramName = pv.value();
-                                        }
-                                        paramNames.add("_" + paramName);
-                                        continue;
-                                    }
-
-                                    var rb = p.getAnnotation(RequestBody.class);
-                                    if (rb != null) {
-                                        paramNames.add("_" + paramName);
-                                        SimProcessorUtil.doRequestBody(codes, p, paramName);
-                                        continue;
-                                    }
-                                }
-                                var template = """
+                                tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), reqMapAnnotation.path(),
+                                        SimUtils.class, reqMapAnnotation.path(), reqMapAnnotation.regex());
+                            } else {
+                                templatePrefix = """
                                         // for $N.$N: $N
                                         {
                                           var methods = new $T[]{$N};
                                           if ($T.httpMethodMatches(requestMethod, methods)) {
                                             if (SimUtils.matchPath(requestPath, $S, $L)) {
                                             """;
-                                var uniqueRouteEntry = reqMapAnnotation.path() + "." + RequestMethod.serializeArray(reqMapAnnotation.method());
-                                if (existingRoutes.contains(uniqueRouteEntry)) {
-                                    var errMsg = "Duplicate route entry found: " + uniqueRouteEntry;
-                                    System.err.println(errMsg);
-                                    throw new RuntimeException(errMsg);
-                                } else {
-                                    existingRoutes.add(uniqueRouteEntry);
-                                }
-                                tryProcessRouteMethodBuilder.addCode(template, classFullName, method.getSimpleName().toString(), reqMapAnnotation.path(),
-                                        RequestMethod.class, RequestMethod.serializeArray(reqMapAnnotation.method()),
-                                        SimUtils.class,
-                                        reqMapAnnotation.path(), reqMapAnnotation.regex());
-                                codes.forEach(codeBlock -> tryProcessRouteMethodBuilder.addCode("      ")
-                                        .addCode(codeBlock));
-                                var returnType = ClassName.get(method.getReturnType());
-                                System.out.println("Found return type: " + returnType.toString());
-                                if (returnType.equals(TypeName.VOID)) {
-                                    tryProcessRouteMethodBuilder.addCode("      ")
-                                            .addCode("response.setStatus(200);\n");
-                                    tryProcessRouteMethodBuilder.addCode("      ")
-                                            .addCode("$N.$N($N);\n", nameRef.get(), method.getSimpleName().toString(), String.join(", ", paramNames));
-                                    tryProcessRouteMethodBuilder.addCode("      ")
-                                            .addCode("callback.succeeded();\n");
-                                } else {
-                                    tryProcessRouteMethodBuilder.addCode("      ")
-                                            .addCode("response.setStatus(200);\n");
-                                    tryProcessRouteMethodBuilder.addCode("      ")
-                                            .addCode("var _res = $N.$N($N);\n", nameRef.get(), method.getSimpleName().toString(), String.join(", ", paramNames));
 
-                                    // Different return type, different handling way
-                                    if (returnType.isPrimitive()) {
-                                        tryProcessRouteMethodBuilder.addCode("      ")
-                                                .addCode("response.write(true, $T.wrap(String.valueOf(_res).getBytes()), callback);\n", ByteBuffer.class);
-                                    } else if(returnType.isBoxedPrimitive()) {
-                                        tryProcessRouteMethodBuilder.addCode("      ")
-                                                .addCode("response.write(true, $T.wrap(_res.toString().getBytes()), callback);\n", ByteBuffer.class);
-                                    } else if (returnType.equals(TypeName.get(String.class))) {
-                                        tryProcessRouteMethodBuilder.addCode("      ")
-                                                .addCode("response.write(true, $T.wrap(_res.getBytes()), callback);\n", ByteBuffer.class);
-                                    } else {
-                                        tryProcessRouteMethodBuilder.addCode("      ")
-                                                .addCode("response.write(true, $T.wrap(JsonUtil.toJson(_res).getBytes()), callback);\n", ByteBuffer.class);
-                                    }
-                                }
-                                template = """
+                                templateSuffix = """
                                               return;
                                             }
                                           }
                                         }
                                         """;
+                                blankPrefix = "      ";
 
-                                tryProcessRouteMethodBuilder.addCode(template);
+                                tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), reqMapAnnotation.path(),
+                                        RequestMethod.class, RequestMethod.serializeArray(reqMapAnnotation.method()),
+                                        SimUtils.class,
+                                        reqMapAnnotation.path(), reqMapAnnotation.regex());
                             }
+
+                            methodParamParseResult.codes.forEach(codeBlock -> tryProcessRouteMethodBuilder.addCode("      ")
+                                    .addCode(codeBlock));
+                            var returnType = ClassName.get(method.getReturnType());
+                            System.out.println("Found return type: " + returnType.toString());
+                            if (returnType.equals(TypeName.VOID)) {
+                                tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                        .addCode("response.setStatus(200);\n");
+                                tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                        .addCode("$N.$N($N);\n", nameRef.get(), method.getSimpleName().toString(), String.join(", ", methodParamParseResult.paramNames));
+                                tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                        .addCode("callback.succeeded();\n");
+                            } else {
+                                tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                        .addCode("response.setStatus(200);\n");
+                                tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                        .addCode("var _res = $N.$N($N);\n", nameRef.get(), method.getSimpleName().toString(), String.join(", ", methodParamParseResult.paramNames));
+
+                                // Different return type, different handling way
+                                if (returnType.isPrimitive()) {
+                                    tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                            .addCode("response.write(true, $T.wrap(String.valueOf(_res).getBytes()), callback);\n", ByteBuffer.class);
+                                } else if(returnType.isBoxedPrimitive()) {
+                                    tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                            .addCode("response.write(true, $T.wrap(_res.toString().getBytes()), callback);\n", ByteBuffer.class);
+                                } else if (returnType.equals(TypeName.get(String.class))) {
+                                    tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                            .addCode("response.write(true, $T.wrap(_res.getBytes()), callback);\n", ByteBuffer.class);
+                                } else {
+                                    tryProcessRouteMethodBuilder.addCode(blankPrefix)
+                                            .addCode("response.write(true, $T.wrap(JsonUtil.toJson(_res).getBytes()), callback);\n", ByteBuffer.class);
+                                }
+                            }
+
+                            tryProcessRouteMethodBuilder.addCode(templateSuffix);
                         }
                     } catch (NullPointerException npe) {
                         npe.printStackTrace();
