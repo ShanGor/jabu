@@ -2,6 +2,7 @@ package cn.gzten;
 
 import cn.gzten.exception.ExceptionHandleResponse;
 import cn.gzten.exception.SimExceptionHandler;
+import cn.gzten.pojo.SimContext;
 import cn.gzten.sim.JSimEntry;
 import cn.gzten.util.HttpParamUtil;
 import cn.gzten.util.JsonUtil;
@@ -52,20 +53,22 @@ public class JSimBoot {
         server.setHandler(new Handler.Abstract() {
             @Override
             public boolean handle(Request request, Response response, Callback callback) {
-                log.info("IP is: {}", request.getConnectionMetaData().getRemoteSocketAddress());
+                var ctx = new SimContext(request, response, callback);
+                log.info("IP is: {}", ctx.getRemoteIp());
 
-                var path = request.getHttpURI().getPath();
+                var path = ctx.getPath();
                 log.info("Requesting: {}",path);
 
                 try {
-                    simEntry.tryProcessRoute(request, response, callback);
+                    simEntry.tryProcessRoute(ctx);
                 } catch (Exception e) {
                         var resp = exceptionHandler.handle(e);
-                        response.getHeaders().add("Content-Type", resp.getContentType());
+                        ctx.setContentType(resp.getContentType());
+
                         if (ExceptionHandleResponse.JSON.equals(resp.getContentType())) {
-                            HttpParamUtil.returnError(response, callback,resp.getStatus(), JsonUtil.toJson(resp.getBody()));
+                            ctx.returnWith(resp.getStatus(), JsonUtil.toJson(resp.getBody()));
                         } else {
-                            HttpParamUtil.returnError(response, callback,resp.getStatus(), resp.getBody().toString());
+                            ctx.returnWith(resp.getStatus(), resp.getBody().toString());
                         }
                 }
 

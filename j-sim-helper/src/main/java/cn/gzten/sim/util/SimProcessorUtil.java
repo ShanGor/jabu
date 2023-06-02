@@ -4,15 +4,12 @@ import cn.gzten.annotation.PathVar;
 import cn.gzten.annotation.QueryParam;
 import cn.gzten.annotation.RequestBody;
 import cn.gzten.exception.SimRequestError;
-import cn.gzten.util.HttpParamUtil;
 import cn.gzten.util.JsonUtil;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
-import org.eclipse.jetty.io.ByteBufferInputStream;
 import org.eclipse.jetty.util.StringUtil;
-import org.eclipse.jetty.util.UrlEncoded;
 
 import javax.lang.model.element.VariableElement;
 import java.io.IOException;
@@ -72,7 +69,7 @@ public class SimProcessorUtil {
         }
 
         codes.add(CodeBlock.of("$T _$N = null;\n", typeName, paramName));
-        codes.add(CodeBlock.of("try(var ins = new $T(request.read().getByteBuffer())) {\n", ByteBufferInputStream.class));
+        codes.add(CodeBlock.of("try(var ins = ctx.getRequestBodyAsStream()) {\n"));
         if (typeName.equals(TypeName.get(String.class)) || typeName.isBoxedPrimitive()) {
             codes.add(CodeBlock.of("  String _$N_str = new String(ins.readAllBytes());\n"));
             if (typeName.equals(TypeName.get(String.class))) {
@@ -114,8 +111,8 @@ public class SimProcessorUtil {
         codes.add(CodeBlock.of("} catch (RuntimeException | $T e) {\n", IOException.class));
         codes.add(CodeBlock.of("  e.printStackTrace();\n"));
         codes.add(CodeBlock.of("""
-                  $T.returnError(response, callback, 400, "Request body parsing error: %s".formatted(e.getMessage()));
-                """, HttpParamUtil.class));
+                  ctx.returnWith(400, "Request body parsing error: %s".formatted(e.getMessage()));
+                """));
         codes.add(CodeBlock.of("}\n"));
     }
 
@@ -127,8 +124,7 @@ public class SimProcessorUtil {
             var paramName = p.getSimpleName().toString();
             if (qp != null) {
                 if (!queryParamDefined) {
-                    result.codes.add(CodeBlock.of("var query = request.getHttpURI().getQuery();\n"));
-                    result.codes.add(CodeBlock.of("var queryParams = $T.decodeQuery(query);\n", UrlEncoded.class));
+                    result.codes.add(CodeBlock.of("var queryParams = ctx.getQueryParams();\n"));
                     queryParamDefined = true;
                 }
                 if (StringUtil.isNotBlank(qp.value())) {

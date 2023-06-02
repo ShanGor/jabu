@@ -1,7 +1,6 @@
 package cn.gzten.util;
 
 import cn.gzten.pojo.RequestMethod;
-import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.StringUtil;
 
 import java.util.Locale;

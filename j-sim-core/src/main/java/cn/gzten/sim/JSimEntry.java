@@ -1,6 +1,7 @@
 package cn.gzten.sim;
 
 import cn.gzten.pojo.RequestMethod;
+import cn.gzten.pojo.SimContext;
 import lombok.Data;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -40,5 +41,5 @@ public abstract class JSimEntry {
         m.put(beanName, bean);
     }
 
-    abstract public void tryProcessRoute(Request request, Response response, Callback callback);
+    abstract public void tryProcessRoute(SimContext ctx);
 }

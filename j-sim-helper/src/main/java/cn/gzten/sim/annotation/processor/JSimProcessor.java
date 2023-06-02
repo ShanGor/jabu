@@ -2,15 +2,13 @@ package cn.gzten.sim.annotation.processor;
 
 import cn.gzten.annotation.*;
 import cn.gzten.pojo.RequestMethod;
+import cn.gzten.pojo.SimContext;
 import cn.gzten.sim.JSimEntry;
 import cn.gzten.sim.pojo.SimClassInfo;
 import cn.gzten.sim.util.SimProcessorUtil;
 import cn.gzten.util.SimUtils;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.StringUtil;
 
 import javax.annotation.processing.*;
@@ -57,11 +55,9 @@ public class JSimProcessor extends AbstractProcessor {
         var tryProcessRouteMethodBuilder = MethodSpec.methodBuilder("tryProcessRoute")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(Request.class, "request")
-                .addParameter(Response.class, "response")
-                .addParameter(Callback.class, "callback");
-        tryProcessRouteMethodBuilder.addCode("var requestPath = request.getHttpURI().getPath();\n");
-        tryProcessRouteMethodBuilder.addCode("var requestMethod = request.getMethod();\n\n");
+                .addParameter(SimContext.class, "ctx");
+        tryProcessRouteMethodBuilder.addCode("var requestPath = ctx.getPath();\n");
+        tryProcessRouteMethodBuilder.addCode("var requestMethod = ctx.getRequest().getMethod();\n\n");
 
         AtomicReference<String> nameRef = new AtomicReference<>();
 
@@ -164,36 +160,36 @@ public class JSimProcessor extends AbstractProcessor {
                             System.out.println("Found return type: " + returnType.toString());
                             if (returnType.equals(TypeName.VOID)) {
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                        .addCode("response.setStatus(200);\n");
+                                        .addCode("ctx.withStatus(200);\n");
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
                                         .addCode("$N.$N($N);\n", nameRef.get(), method.getSimpleName().toString(), String.join(", ", methodParamParseResult.paramNames));
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                        .addCode("callback.succeeded();\n");
+                                        .addCode("ctx.returnVoid();\n");
                             } else {
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                        .addCode("response.setStatus(200);\n");
+                                        .addCode("ctx.withStatus(200);\n");
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
                                         .addCode("var _res = $N.$N($N);\n", nameRef.get(), method.getSimpleName().toString(), String.join(", ", methodParamParseResult.paramNames));
 
                                 // Different return type, different handling way
                                 if (returnType.isPrimitive()) {
                                     tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                            .addCode("response.write(true, $T.wrap(String.valueOf(_res).getBytes()), callback);\n", ByteBuffer.class);
+                                            .addCode("ctx.returnWith(String.valueOf(_res));\n");
                                 } else if(returnType.isBoxedPrimitive()) {
                                     tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                            .addCode("response.write(true, $T.wrap(_res.toString().getBytes()), callback);\n", ByteBuffer.class);
+                                            .addCode("ctx.returnWith(_res.toString());\n");
                                 } else if (returnType.equals(TypeName.get(String.class))) {
                                     tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                            .addCode("response.write(true, $T.wrap(_res.getBytes()), callback);\n", ByteBuffer.class);
+                                            .addCode("ctx.returnWith(_res);\n");
                                 } else {
                                     tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                            .addCode("response.write(true, $T.wrap(JsonUtil.toJson(_res).getBytes()), callback);\n", ByteBuffer.class);
+                                            .addCode("ctx.returnWith(JsonUtil.toJson(_res));\n");
                                 }
                             }
 
                             tryProcessRouteMethodBuilder.addCode(templateSuffix);
                         }
-                    } catch (NullPointerException npe) {
+                    } catch (RuntimeException npe) {
                         npe.printStackTrace();
                         continue;
                     }
