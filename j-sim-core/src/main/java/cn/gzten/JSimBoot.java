@@ -41,7 +41,7 @@ public class JSimBoot {
         Server server = new Server(threadPool);
 
         // Create a ServerConnector to accept connections from clients.
-        var connector = new ServerConnector(server, 189, 10, new HttpConnectionFactory());
+        var connector = new ServerConnector(server, 10, 5, new HttpConnectionFactory());
         connector.setPort(8080);
         connector.setAcceptQueueSize(10000);
 

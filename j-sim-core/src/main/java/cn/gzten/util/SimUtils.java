@@ -1,11 +1,80 @@
 package cn.gzten.util;
 
+import cn.gzten.exception.SimStartUpError;
 import cn.gzten.pojo.RequestMethod;
 import org.eclipse.jetty.util.StringUtil;
 
 import java.util.Locale;
 
 public class SimUtils {
+
+    /**
+     * Set the first character to uppercase
+     * @param str
+     * @return
+     */
+    public static final String capitalize(final String str) {
+        if (StringUtil.isBlank(str)) return str;
+
+        if (str.length() == 1) {
+            return str.toUpperCase(Locale.ROOT);
+        }
+
+        var c = str.charAt(0);
+        if (c >= 'a' && c <= 'z') {
+            StringBuilder sb = new StringBuilder();
+            sb.append((char)(c + 'A' - 'a'));
+            sb.append(str.substring(1));
+            return sb.toString();
+        } else {
+            return str;
+        }
+    }
+
+    /**
+     * Set the first character to lowercase
+     * @param str
+     * @return
+     */
+    public static final String lowercaseInitial(final String str) {
+        if (StringUtil.isBlank(str)) return str;
+
+        if (str.length() == 1) {
+            return str.toLowerCase(Locale.ROOT);
+        }
+
+        var c = str.charAt(0);
+        if (c >= 'A' && c <= 'Z') {
+            StringBuilder sb = new StringBuilder();
+            sb.append((char)(c - 'A' + 'a'));
+            sb.append(str.substring(1));
+            return sb.toString();
+        } else {
+            return str;
+        }
+    }
+
+    /**
+     * Used to do @AutoWired
+     * @param obj
+     * @param fieldName
+     * @param bean
+     */
+    public static void wireBean(Object obj, String fieldName, Object bean) {
+        try {
+            var field = obj.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(obj, bean);
+        } catch (NoSuchFieldException e) {
+            throw new SimStartUpError("Failed at wiring beans: " + e.getMessage());
+        } catch (IllegalAccessException e) {
+            throw new SimStartUpError(e.getMessage());
+        }
+    }
+
+    public static final String composeSetter(final String fieldName) {
+        return "set%s".formatted(capitalize(fieldName));
+    }
 
     public static final boolean stringInArray(final String str, final String[] array) {
         if (StringUtil.isBlank(str)) return false;

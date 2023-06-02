@@ -3,8 +3,7 @@ package cn.gzten.util;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SimUtilsTests {
     @Test
@@ -51,5 +50,39 @@ public class SimUtilsTests {
     @Test
     public void testJson() {
         System.out.println(JsonUtil.toJson(1));
+    }
+
+    @Test
+    public void testCapitalize() {
+        assertEquals(" hey", SimUtils.capitalize(" hey"));
+        assertEquals(" ", SimUtils.capitalize(" "));
+        assertNull(SimUtils.capitalize(null));
+        assertEquals("Hey", SimUtils.capitalize("hey"));
+        assertEquals("Hey", SimUtils.capitalize("Hey"));
+    }
+
+    @Test
+    public void testLowercaseInitial() {
+        assertEquals(" hey", SimUtils.lowercaseInitial(" hey"));
+        assertEquals(" ", SimUtils.lowercaseInitial(" "));
+        assertNull(SimUtils.lowercaseInitial(null));
+        assertEquals("hey", SimUtils.lowercaseInitial("hey"));
+        assertEquals("hey", SimUtils.lowercaseInitial("Hey"));
+    }
+
+    @Test
+    public void testComposeSetter() {
+        assertEquals("setHey", SimUtils.composeSetter("Hey"));
+        assertEquals("setHey", SimUtils.composeSetter("hey"));
+    }
+
+    @Test
+    public void testWireBean() {
+        class A {
+            private String hey;
+        }
+        var a = new A();
+        SimUtils.wireBean(a, "hey", "you");
+        assertEquals("you", a.hey);
     }
 }
