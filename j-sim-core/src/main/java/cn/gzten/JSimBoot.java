@@ -4,7 +4,6 @@ import cn.gzten.exception.ExceptionHandleResponse;
 import cn.gzten.exception.SimExceptionHandler;
 import cn.gzten.pojo.SimContext;
 import cn.gzten.sim.JSimEntry;
-import cn.gzten.util.HttpParamUtil;
 import cn.gzten.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.*;
