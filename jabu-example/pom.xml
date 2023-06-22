@@ -71,7 +71,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        cn.gzten.Main
+                                        cn.gzten.example.Main
                                     </mainClass>
                                 </manifest>
                                 <!--                                <manifestEntries>-->
