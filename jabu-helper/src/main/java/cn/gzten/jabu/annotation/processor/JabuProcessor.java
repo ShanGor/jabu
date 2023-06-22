@@ -30,7 +30,7 @@ public class JabuProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        var classSpecBuilder = TypeSpec.classBuilder("JSimEntryImpl")
+        var classSpecBuilder = TypeSpec.classBuilder("JabuEntryImpl")
                 .superclass(JabuEntry.class)
                 .addModifiers(Modifier.PUBLIC);
         var getBeanMethodBuilder = MethodSpec.methodBuilder("getBean")
@@ -58,7 +58,7 @@ public class JabuProcessor extends AbstractProcessor {
                 .build();
 
         try {
-            JavaFile.builder("cn.gzten.sim", spec).build().writeTo(filer);
+            JavaFile.builder("cn.gzten.jabu", spec).build().writeTo(filer);
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);

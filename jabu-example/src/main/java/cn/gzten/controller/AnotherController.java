@@ -1,8 +1,8 @@
 package cn.gzten.controller;
 
-import cn.gzten.annotation.Controller;
-import cn.gzten.annotation.RequestMapping;
-import cn.gzten.pojo.SimContext;
+import cn.gzten.jabu.annotation.Controller;
+import cn.gzten.jabu.annotation.RequestMapping;
+import cn.gzten.jabu.pojo.JabuContext;
 import lombok.Data;
 import lombok.Setter;
 
@@ -22,7 +22,7 @@ public class AnotherController {
     }
 
     @RequestMapping(path = "/test-download")
-    public void testDownloadFile(SimContext ctx) {
+    public void testDownloadFile(JabuContext ctx) {
         var BUF_SIZE = 4096;
         try {
             var fileName = "ffmpeg-release-full.7z";
@@ -35,7 +35,7 @@ public class AnotherController {
         }
     }
     @RequestMapping(path = "/test-download-classpath")
-    public void testDownloadClassPathFile(SimContext ctx) {
+    public void testDownloadClassPathFile(JabuContext ctx) {
         try {
             var fileName = "test-cases.txt";
             var ins = this.getClass().getClassLoader().getResourceAsStream(fileName);

@@ -1,9 +1,10 @@
 package cn.gzten;
 
-import cn.gzten.sim.JSimEntryImpl;
+import cn.gzten.jabu.JabuBoot;
+import cn.gzten.jabu.JabuEntryImpl;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        new JSimBoot(new JSimEntryImpl()).startServer();
+        new JabuBoot(new JabuEntryImpl()).startServer();
     }
 }

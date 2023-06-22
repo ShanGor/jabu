@@ -1,10 +1,10 @@
 package cn.gzten.controller;
 
-import cn.gzten.annotation.Controller;
-import cn.gzten.annotation.QueryParam;
-import cn.gzten.annotation.RequestBody;
-import cn.gzten.annotation.RequestMapping;
-import cn.gzten.pojo.RequestMethod;
+import cn.gzten.jabu.annotation.Controller;
+import cn.gzten.jabu.annotation.QueryParam;
+import cn.gzten.jabu.annotation.RequestBody;
+import cn.gzten.jabu.annotation.RequestMapping;
+import cn.gzten.jabu.pojo.RequestMethod;
 import lombok.Data;
 
 import java.util.List;
