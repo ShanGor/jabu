@@ -19,14 +19,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SimProcessorUtil {
-    public static void doTypeMapping(List<CodeBlock> codes, VariableElement p, String paramName, boolean mandatory) {
+    public static void doTypeMapping(List<CodeBlock> codes, VariableElement p, String paramName, String queryParamKey, boolean mandatory) {
         if (mandatory) {
             codes.add(CodeBlock.of("if (!queryParams.containsKey($S)) { throw new $T($S);}\n",
-                    paramName, SimRequestError.class, "Not found parameter: %s".formatted(paramName)));
+                    queryParamKey, SimRequestError.class, "Not found parameter: %s".formatted(queryParamKey)));
         }
 
         // get it as String first.
-        codes.add(CodeBlock.of("String _$N_str = queryParams.getValue($S);\n", paramName, paramName));
+        codes.add(CodeBlock.of("String _$N_str = queryParams.getValue($S);\n", paramName, queryParamKey));
 
         var paramType = ClassName.get(p.asType());
         if (paramType.equals(TypeName.get(String.class))) {
@@ -129,19 +129,22 @@ public class SimProcessorUtil {
                     result.codes.add(CodeBlock.of("var queryParams = ctx.getQueryParams();\n"));
                     queryParamDefined = true;
                 }
+
+                var queryParamKey = paramName;
                 if (StringUtil.isNotBlank(qp.value())) {
-                    paramName = qp.value();
+                    queryParamKey = qp.value();
                 }
                 result.paramNames.add("_" + paramName);
 
-                SimProcessorUtil.doTypeMapping(result.codes, p, paramName, qp.required());
+                SimProcessorUtil.doTypeMapping(result.codes, p, paramName, queryParamKey, qp.required());
 
                 continue;
             }
             var pv = p.getAnnotation(PathVar.class);
             if (pv != null) {
+                var queryParamKey = paramName;
                 if (StringUtil.isNotBlank(pv.value())) {
-                    paramName = pv.value();
+                    queryParamKey = pv.value();
                 }
                 result.paramNames.add("_" + paramName);
                 continue;

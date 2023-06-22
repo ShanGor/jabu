@@ -13,12 +13,12 @@ import java.util.Map;
 @Controller
 public class MainController {
     @RequestMapping(path = "/hello", method = RequestMethod.GET)
-    public String hello(@QueryParam("name") String name) {
-        return "Hello, %s".formatted(name);
+    public String hello(@QueryParam("name") String nameForHello) {
+        return "Hello, %s".formatted(nameForHello);
     }
 
     @RequestMapping(path = "/test-void", method = RequestMethod.GET)
-    public void testVoid(@QueryParam("name") String name) {
+    public void testVoid(@QueryParam String name) {
         System.out.println(name);
     }
 
