@@ -4,6 +4,7 @@ import cn.gzten.annotation.PathVar;
 import cn.gzten.annotation.QueryParam;
 import cn.gzten.annotation.RequestBody;
 import cn.gzten.exception.SimRequestError;
+import cn.gzten.pojo.SimContext;
 import cn.gzten.util.JsonUtil;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.javapoet.ClassName;
@@ -11,6 +12,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import org.eclipse.jetty.util.StringUtil;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -151,9 +153,21 @@ public class SimProcessorUtil {
                 SimProcessorUtil.doRequestBody(result.codes, p, paramName);
                 continue;
             }
+
+            // If the parameter is asking for SimContext, give it
+            if (elementIsType(p, SimContext.class)) {
+                result.paramNames.add("_" + paramName);
+                result.codes.add(CodeBlock.of("var _$N = ctx;\n", paramName));
+                continue;
+            }
+
         }
 
         return result;
+    }
+
+    public static boolean elementIsType(Element e, Class clazz) {
+        return TypeName.get(clazz).equals(TypeName.get(e.asType()));
     }
 
     public static class MethodParameterResult {
