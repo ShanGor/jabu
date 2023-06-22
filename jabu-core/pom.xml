@@ -67,7 +67,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        cn.gzten.JSimBoot
+                                        cn.gzten.jabu.JabuBoot
                                     </mainClass>
                                 </manifest>
 <!--                                <manifestEntries>-->

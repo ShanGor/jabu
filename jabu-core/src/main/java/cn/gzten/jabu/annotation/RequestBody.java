@@ -1,4 +1,4 @@
-package cn.gzten.annotation;
+package cn.gzten.jabu.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

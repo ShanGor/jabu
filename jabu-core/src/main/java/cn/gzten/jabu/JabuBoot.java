@@ -1,10 +1,9 @@
-package cn.gzten;
+package cn.gzten.jabu;
 
-import cn.gzten.exception.ExceptionHandleResponse;
-import cn.gzten.exception.SimExceptionHandler;
-import cn.gzten.pojo.SimContext;
-import cn.gzten.sim.JSimEntry;
-import cn.gzten.util.JsonUtil;
+import cn.gzten.jabu.exception.ExceptionHandleResponse;
+import cn.gzten.jabu.exception.JabuExceptionHandler;
+import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.Callback;
@@ -12,24 +11,24 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import java.util.concurrent.Executors;
 
 @Slf4j
-public class JSimBoot {
-    private JSimEntry simEntry;
+public class JabuBoot {
+    private JabuEntry jabuEntry;
 
-    private SimExceptionHandler exceptionHandler = null;
+    private JabuExceptionHandler exceptionHandler = null;
 
-    public JSimBoot(JSimEntry entry) {
-        this.simEntry = entry;
-        this.simEntry.init();
+    public JabuBoot(JabuEntry entry) {
+        this.jabuEntry = entry;
+        this.jabuEntry.init();
     }
 
-    public JSimBoot setExceptionHandler(SimExceptionHandler exceptionHandler) {
+    public JabuBoot setExceptionHandler(JabuExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
         return this;
     }
 
     public void startServer() throws Exception {
         if (this.exceptionHandler == null) {
-            this.exceptionHandler = new SimExceptionHandler.DefaultSimExceptionHandler();
+            this.exceptionHandler = new JabuExceptionHandler.DefaultJabuExceptionHandler();
         }
 
         // Create and configure a ThreadPool.
@@ -52,14 +51,14 @@ public class JSimBoot {
         server.setHandler(new Handler.Abstract() {
             @Override
             public boolean handle(Request request, Response response, Callback callback) {
-                var ctx = new SimContext(request, response, callback);
+                var ctx = new JabuContext(request, response, callback);
                 log.info("IP is: {}", ctx.getRemoteIp());
 
                 var path = ctx.getPath();
                 log.info("Requesting: {}",path);
 
                 try {
-                    simEntry.tryProcessRoute(ctx);
+                    jabuEntry.tryProcessRoute(ctx);
                 } catch (Exception e) {
                         var resp = exceptionHandler.handle(e);
                         ctx.setContentType(resp.getContentType());

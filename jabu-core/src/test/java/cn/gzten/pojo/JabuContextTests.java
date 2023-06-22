@@ -1,5 +1,6 @@
 package cn.gzten.pojo;
 
+import cn.gzten.jabu.pojo.JabuContext;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -12,14 +13,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-public class SimContextTests {
+public class JabuContextTests {
     @Test
     public void testGetQueryParams() {
         var request = mock(Request.class);
         var response = mock(Response.class);
         var callback = mock(Callback.class);
         var uri = mock(org.eclipse.jetty.http.HttpURI.class);
-        var ctx = new SimContext(request, response, callback);
+        var ctx = new JabuContext(request, response, callback);
 
         when(request.getHttpURI()).thenReturn(uri);
         when(uri.getQuery()).thenReturn("name=Samuel");

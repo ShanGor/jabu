@@ -1,4 +1,4 @@
-package cn.gzten.exception;
+package cn.gzten.jabu.exception;
 
 import lombok.Data;
 

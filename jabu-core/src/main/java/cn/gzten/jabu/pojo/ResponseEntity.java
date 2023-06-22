@@ -1,4 +1,4 @@
-package cn.gzten.pojo;
+package cn.gzten.jabu.pojo;
 
 import lombok.Getter;
 

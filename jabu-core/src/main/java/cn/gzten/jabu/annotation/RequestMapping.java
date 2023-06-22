@@ -1,7 +1,7 @@
-package cn.gzten.annotation;
+package cn.gzten.jabu.annotation;
 
 
-import cn.gzten.pojo.RequestMethod;
+import cn.gzten.jabu.pojo.RequestMethod;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

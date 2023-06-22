@@ -1,12 +1,12 @@
-package cn.gzten.exception;
+package cn.gzten.jabu.exception;
 
-public interface SimExceptionHandler {
+public interface JabuExceptionHandler {
     ExceptionHandleResponse handle(Exception e);
-    class DefaultSimExceptionHandler implements SimExceptionHandler {
+    class DefaultJabuExceptionHandler implements JabuExceptionHandler {
         @Override
         public ExceptionHandleResponse handle(Exception e) {
             var resp = new ExceptionHandleResponse();
-            if (e instanceof SimRequestError) {
+            if (e instanceof JabuRequestError) {
                 resp.setStatus(400);
             } else {
                 resp.setStatus(500);

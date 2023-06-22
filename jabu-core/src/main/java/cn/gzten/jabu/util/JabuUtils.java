@@ -1,8 +1,8 @@
-package cn.gzten.util;
+package cn.gzten.jabu.util;
 
-import cn.gzten.exception.SimStartUpError;
-import cn.gzten.pojo.RequestMethod;
-import cn.gzten.pojo.SimContext;
+import cn.gzten.jabu.exception.JabuStartUpError;
+import cn.gzten.jabu.pojo.RequestMethod;
+import cn.gzten.jabu.pojo.JabuContext;
 import org.eclipse.jetty.util.StringUtil;
 
 import java.io.IOException;
@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.util.Locale;
 
-public class SimUtils {
+public class JabuUtils {
 
     /**
      * Set the first character to uppercase
@@ -71,9 +71,9 @@ public class SimUtils {
             field.setAccessible(true);
             field.set(obj, bean);
         } catch (NoSuchFieldException e) {
-            throw new SimStartUpError("Failed at wiring beans: " + e.getMessage());
+            throw new JabuStartUpError("Failed at wiring beans: " + e.getMessage());
         } catch (IllegalAccessException e) {
-            throw new SimStartUpError(e.getMessage());
+            throw new JabuStartUpError(e.getMessage());
         }
     }
 
@@ -157,7 +157,7 @@ public class SimUtils {
      * @param fileName
      * @throws IOException
      */
-    public static void serveChannelToDownload(ByteChannel channel, SimContext ctx, int BUF_SIZE, String fileName) throws IOException {
+    public static void serveChannelToDownload(ByteChannel channel, JabuContext ctx, int BUF_SIZE, String fileName) throws IOException {
         var bf = ByteBuffer.allocate(BUF_SIZE);
         ctx.addHeader("Content-Disposition", "attachment; filename=\"%s\"".formatted(fileName));
         while(channel.read(bf) > 0) {
@@ -180,7 +180,7 @@ public class SimUtils {
      * @param fileName
      * @throws IOException
      */
-    public static void serveInputStreamToDownload(InputStream ins, SimContext ctx, int BUF_SIZE, String fileName) throws IOException {
+    public static void serveInputStreamToDownload(InputStream ins, JabuContext ctx, int BUF_SIZE, String fileName) throws IOException {
         var bf = new byte[BUF_SIZE];
         ctx.addHeader("Content-Disposition", "attachment; filename=\"%s\"".formatted(fileName));
         int len = ins.read(bf);

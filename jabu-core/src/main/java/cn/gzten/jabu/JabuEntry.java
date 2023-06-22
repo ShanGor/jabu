@@ -1,18 +1,11 @@
-package cn.gzten.sim;
+package cn.gzten.jabu;
 
-import cn.gzten.pojo.RequestMethod;
-import cn.gzten.pojo.SimContext;
-import lombok.Data;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
+import cn.gzten.jabu.pojo.JabuContext;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class JSimEntry {
+public abstract class JabuEntry {
     protected Map<Class, Map<String, Object>> beans = new ConcurrentHashMap<>();
 
     abstract public Object getBean(String beanName);
@@ -41,5 +34,5 @@ public abstract class JSimEntry {
         m.put(beanName, bean);
     }
 
-    abstract public void tryProcessRoute(SimContext ctx);
+    abstract public void tryProcessRoute(JabuContext ctx);
 }

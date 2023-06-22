@@ -1,4 +1,4 @@
-package cn.gzten.pojo;
+package cn.gzten.jabu.pojo;
 
 import java.util.Arrays;
 import java.util.Locale;

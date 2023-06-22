@@ -1,4 +1,4 @@
-package cn.gzten.util;
+package cn.gzten.jabu.util;
 
 
 import com.google.gson.Gson;

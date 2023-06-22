@@ -1,6 +1,6 @@
-package cn.gzten.pojo;
+package cn.gzten.jabu.pojo;
 
-import cn.gzten.util.SimUtils;
+import cn.gzten.jabu.util.JabuUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.eclipse.jetty.io.ByteBufferInputStream;
@@ -19,7 +19,7 @@ import java.nio.channels.ByteChannel;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SimContext {
+public class JabuContext {
     @Getter
     private Request request;
     @Getter
@@ -30,7 +30,7 @@ public class SimContext {
     @Setter
     private int downloadBufferSize = 4096;
 
-    public SimContext(Request request, Response response, Callback callback) {
+    public JabuContext(Request request, Response response, Callback callback) {
         this.request = request;
         this.response = response;
         this.callback = callback;
@@ -57,29 +57,29 @@ public class SimContext {
         return request.getConnectionMetaData().getRemoteSocketAddress();
     }
 
-    public SimContext addHeader(String key, String value) {
+    public JabuContext addHeader(String key, String value) {
         response.getHeaders().add(key, value);
         return this;
     }
 
-    public SimContext setContentType(String type) {
+    public JabuContext setContentType(String type) {
         return addHeader("Content-Type", type);
     }
 
-    public SimContext withStatus(int status) {
+    public JabuContext withStatus(int status) {
         response.setStatus(status);
         return this;
     }
 
-    public SimContext returnAsJson() {
+    public JabuContext returnAsJson() {
         return setContentType("application/json");
     }
 
-    public SimContext returnAsText() {
+    public JabuContext returnAsText() {
         return setContentType("text/plain");
     }
 
-    public SimContext returnAsHtml() {
+    public JabuContext returnAsHtml() {
         return setContentType("text/html");
     }
 
@@ -115,7 +115,7 @@ public class SimContext {
      * @throws IOException
      */
     public void serveByteChannelToDownload(ByteChannel channel, String fileName) throws IOException {
-        SimUtils.serveChannelToDownload(channel, this, downloadBufferSize, fileName);
+        JabuUtils.serveChannelToDownload(channel, this, downloadBufferSize, fileName);
     }
 
     /**
@@ -125,7 +125,7 @@ public class SimContext {
      * @throws IOException
      */
     public void serveInputStreamToDownload(InputStream ins, String fileName) throws IOException {
-        SimUtils.serveInputStreamToDownload(ins, this, downloadBufferSize, fileName);
+        JabuUtils.serveInputStreamToDownload(ins, this, downloadBufferSize, fileName);
     }
 
     /**
