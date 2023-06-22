@@ -1,4 +1,4 @@
-package cn.gzten.controller;
+package cn.gzten.example.controller;
 
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.pojo.RequestMethod;
@@ -9,42 +9,42 @@ import java.util.Map;
 
 @Controller
 public class MainController {
-    @RequestMapping(path = "/hello", method = RequestMethod.GET)
+    @Route(path = "/hello", method = RequestMethod.GET)
     public String hello(@QueryParam("name") String nameForHello) {
         return "Hello, %s".formatted(nameForHello);
     }
 
-    @RequestMapping(path = "/test-void", method = RequestMethod.GET)
+    @Route(path = "/test-void", method = RequestMethod.GET)
     public void testVoid(@QueryParam String name) {
         System.out.println(name);
     }
 
-    @RequestMapping(path = "/world", method = RequestMethod.GET)
+    @Route(path = "/world", method = RequestMethod.GET)
     public Map<String, String> test() {
         return Map.of("Hey", "you");
     }
 
-    @RequestMapping(path = "/test-int", method = RequestMethod.GET)
+    @Route(path = "/test-int", method = RequestMethod.GET)
     public int testInt() {
         return 128;
     }
 
-    @RequestMapping(path = "/test-integer", method = RequestMethod.GET)
+    @Route(path = "/test-integer", method = RequestMethod.GET)
     public Integer testInteger() {
         return 128;
     }
 
-    @RequestMapping(path = "/test/{year}/{month}", method = RequestMethod.GET)
+    @Route(path = "/test/{year}/{month}", method = RequestMethod.GET)
     public String testYearMonth(@PathVar Integer year, @PathVar("month") Integer myMonth) {
         return "%d-%d".formatted(year, myMonth);
     }
 
-    @RequestMapping(path = "/test-bool", method = RequestMethod.GET)
+    @Route(path = "/test-bool", method = RequestMethod.GET)
     public boolean testBool() {
         return true;
     }
 
-    @RequestMapping(path = "/test", method = RequestMethod.POST)
+    @Route(path = "/test", method = RequestMethod.POST)
     public String postHey(@RequestBody List<Hey> hey) {
         return "Greeting from %s".formatted(hey.get(0).hey);
     }

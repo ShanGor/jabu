@@ -11,17 +11,17 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import java.util.concurrent.Executors;
 
 @Slf4j
-public class JabuBoot {
+public class JabuApplication {
     private JabuEntry jabuEntry;
 
     private JabuExceptionHandler exceptionHandler = null;
 
-    public JabuBoot(JabuEntry entry) {
+    public JabuApplication(JabuEntry entry) {
         this.jabuEntry = entry;
         this.jabuEntry.init();
     }
 
-    public JabuBoot setExceptionHandler(JabuExceptionHandler exceptionHandler) {
+    public JabuApplication setExceptionHandler(JabuExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
         return this;
     }

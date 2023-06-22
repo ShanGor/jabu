@@ -1,4 +1,4 @@
-package cn.gzten.controller;
+package cn.gzten.example.controller;
 
 import cn.gzten.jabu.annotation.Controller;
 import cn.gzten.jabu.annotation.Route;

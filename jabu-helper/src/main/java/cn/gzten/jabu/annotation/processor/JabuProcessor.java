@@ -3,6 +3,7 @@ package cn.gzten.jabu.annotation.processor;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.pojo.JabuContext;
 import cn.gzten.jabu.JabuEntry;
+import cn.gzten.jabu.pojo.SimClassInfo;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 
@@ -25,7 +26,7 @@ public class JabuProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(Controller.class.getCanonicalName());
+        return Set.of(JabuBoot.class.getCanonicalName(), Controller.class.getCanonicalName());
     }
 
     @Override
@@ -45,6 +46,16 @@ public class JabuProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(JabuContext.class, "ctx");
 
+        var elements = roundEnv.getElementsAnnotatedWith(JabuBoot.class);
+        if (elements.isEmpty()) return false;
+        if (elements.size() != 1) {
+            System.err.println("Found 0 / more-than-1 @JabuBoot classes, compile failed!");
+            throw new RuntimeException("Found 0 / more-than-1 @JabuBoot classes, compile failed!");
+        }
+        Element bootMain = (Element) elements.toArray()[0];
+        String classFullName = bootMain.toString();
+        var bootClassInfo = SimClassInfo.from(classFullName, bootMain);
+
         // Process @Controller cases
         var processResult = ControllerProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, tryProcessRouteMethodBuilder );
         if (processResult == false) return false;
@@ -58,7 +69,7 @@ public class JabuProcessor extends AbstractProcessor {
                 .build();
 
         try {
-            JavaFile.builder("cn.gzten.jabu", spec).build().writeTo(filer);
+            JavaFile.builder(bootClassInfo.packageName, spec).build().writeTo(filer);
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
