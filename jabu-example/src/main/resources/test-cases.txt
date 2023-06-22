@@ -14,8 +14,8 @@ curl -i http://localhost:8080/test-void?name=sam
 
 curl -i http://localhost:8080/world
 
-curl -i http://localhost:8080/test-another
-curl http://localhost:8080/test-another -d ''
+curl -i http://localhost:8080/api/test-another
+curl http://localhost:8080/api/test-another -d ''
 
 
 curl -i http://localhost:8080/test/2023/5

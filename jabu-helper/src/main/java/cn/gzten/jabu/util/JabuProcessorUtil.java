@@ -16,6 +16,7 @@ import javax.lang.model.element.VariableElement;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 public class JabuProcessorUtil {
     public static void doTypeMapping(List<CodeBlock> codes, VariableElement p, String paramName) {
@@ -148,7 +149,7 @@ public class JabuProcessorUtil {
                 result.paramNames.add("_" + paramName);
 
                 // try to get the path var
-                result.codes.add(CodeBlock.of("java.util.Optional<String> _$N_str_opt = ctx.getPathVar($S);\n", paramName, queryParamKey));
+                result.codes.add(CodeBlock.of("$T<String> _$N_str_opt = ctx.getPathVar($S);\n", Optional.class, paramName, queryParamKey));
 
                 // PathVar, once defined, it is mandatory
                 result.codes.add(CodeBlock.of("if (_$N_str_opt.isEmpty()) { throw new $T($S);}\n",

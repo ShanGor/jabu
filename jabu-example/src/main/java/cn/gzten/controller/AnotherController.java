@@ -1,7 +1,7 @@
 package cn.gzten.controller;
 
 import cn.gzten.jabu.annotation.Controller;
-import cn.gzten.jabu.annotation.RequestMapping;
+import cn.gzten.jabu.annotation.Route;
 import cn.gzten.jabu.pojo.JabuContext;
 import lombok.Data;
 import lombok.Setter;
@@ -11,17 +11,20 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-@Controller
+/**
+ * With basePath of all APIs.
+ */
+@Controller(basePath = "/api")
 @Data
 public class AnotherController {
     @Setter
     private String hello;
-    @RequestMapping(path = "/test-another")
+    @Route(path = "/test-another")
     public String test() {
         return "Hello world";
     }
 
-    @RequestMapping(path = "/test-download")
+    @Route(path = "/test-download")
     public void testDownloadFile(JabuContext ctx) {
         var BUF_SIZE = 4096;
         try {
@@ -34,7 +37,7 @@ public class AnotherController {
             throw new RuntimeException(e);
         }
     }
-    @RequestMapping(path = "/test-download-classpath")
+    @Route(path = "/test-download-classpath")
     public void testDownloadClassPathFile(JabuContext ctx) {
         try {
             var fileName = "test-cases.txt";

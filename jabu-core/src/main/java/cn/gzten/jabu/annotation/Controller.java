@@ -13,4 +13,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Controller {
     String name() default "";
+    String basePath() default "";
 }

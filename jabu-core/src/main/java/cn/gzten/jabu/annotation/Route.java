@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.SOURCE)
-public @interface RequestMapping {
+public @interface Route {
     String path();
     RequestMethod[] method() default {};
     boolean regex() default false;

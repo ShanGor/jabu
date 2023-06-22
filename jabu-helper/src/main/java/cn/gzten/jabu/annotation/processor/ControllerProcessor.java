@@ -1,7 +1,7 @@
 package cn.gzten.jabu.annotation.processor;
 
 import cn.gzten.jabu.annotation.Controller;
-import cn.gzten.jabu.annotation.RequestMapping;
+import cn.gzten.jabu.annotation.Route;
 import cn.gzten.jabu.pojo.RequestMethod;
 import cn.gzten.jabu.pojo.SimClassInfo;
 import cn.gzten.jabu.util.JabuProcessorUtil;
@@ -34,6 +34,7 @@ public class ControllerProcessor {
         Set<String> existingRoutes = new HashSet<>();
         for (var e : elements) {
             Controller controllerAnnotation = e.getAnnotation(Controller.class);
+            var basePath = controllerAnnotation.basePath();
 
             String classFullName = e.toString();
             System.out.println("Pre-processing: " + classFullName);
@@ -66,13 +67,15 @@ public class ControllerProcessor {
                 if (el instanceof ExecutableElement) {
                     var method = (ExecutableElement)el;
                     try {
-                        RequestMapping reqMapAnnotation = method.getAnnotation(RequestMapping.class);
+                        Route reqMapAnnotation = method.getAnnotation(Route.class);
                         if (reqMapAnnotation != null) {
                             System.out.println("Found request mapping method: " + method.getSimpleName().toString());
 
                             var methodParamParseResult = JabuProcessorUtil.prepareMethodParameters(method.getParameters());
 
-                            var uniqueRouteEntry = reqMapAnnotation.path() + "." + RequestMethod.serializeArray(reqMapAnnotation.method());
+                            var requestPathPattern = basePath + reqMapAnnotation.path();
+
+                            var uniqueRouteEntry = requestPathPattern + "." + RequestMethod.serializeArray(reqMapAnnotation.method());
                             if (existingRoutes.contains(uniqueRouteEntry)) {
                                 var errMsg = "Duplicate route entry found: " + uniqueRouteEntry;
                                 System.err.println(errMsg);
@@ -99,8 +102,8 @@ public class ControllerProcessor {
                                         """;
                                 blankPrefix = "    ";
 
-                                tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), reqMapAnnotation.path(),
-                                        JabuUtils.class, reqMapAnnotation.path(), reqMapAnnotation.regex());
+                                tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), requestPathPattern,
+                                        JabuUtils.class, requestPathPattern, reqMapAnnotation.regex());
                             } else {
                                 templatePrefix = """
                                         // for $N.$N: $N
@@ -118,10 +121,10 @@ public class ControllerProcessor {
                                         """;
                                 blankPrefix = "      ";
 
-                                tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), reqMapAnnotation.path(),
+                                tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), requestPathPattern,
                                         RequestMethod.class, RequestMethod.serializeArray(reqMapAnnotation.method()),
                                         JabuUtils.class,
-                                        reqMapAnnotation.path(), reqMapAnnotation.regex());
+                                        requestPathPattern, reqMapAnnotation.regex());
                             }
 
                             methodParamParseResult.codes.forEach(codeBlock -> tryProcessRouteMethodBuilder.addCode(blankPrefix)
