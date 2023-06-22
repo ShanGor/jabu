@@ -1,9 +1,6 @@
 package cn.gzten.controller;
 
-import cn.gzten.jabu.annotation.Controller;
-import cn.gzten.jabu.annotation.QueryParam;
-import cn.gzten.jabu.annotation.RequestBody;
-import cn.gzten.jabu.annotation.RequestMapping;
+import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.pojo.RequestMethod;
 import lombok.Data;
 
@@ -35,6 +32,11 @@ public class MainController {
     @RequestMapping(path = "/test-integer", method = RequestMethod.GET)
     public Integer testInteger() {
         return 128;
+    }
+
+    @RequestMapping(path = "/test/{year}/{month}", method = RequestMethod.GET)
+    public String testYearMonth(@PathVar Integer year, @PathVar("month") Integer myMonth) {
+        return "%d-%d".formatted(year, myMonth);
     }
 
     @RequestMapping(path = "/test-bool", method = RequestMethod.GET)

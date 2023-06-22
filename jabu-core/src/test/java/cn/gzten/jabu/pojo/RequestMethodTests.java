@@ -1,6 +1,5 @@
-package cn.gzten.pojo;
+package cn.gzten.jabu.pojo;
 
-import cn.gzten.jabu.pojo.RequestMethod;
 import org.junit.jupiter.api.Test;
 
 public class RequestMethodTests {

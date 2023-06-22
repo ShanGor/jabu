@@ -18,15 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class JabuProcessorUtil {
-    public static void doTypeMapping(List<CodeBlock> codes, VariableElement p, String paramName, String queryParamKey, boolean mandatory) {
-        if (mandatory) {
-            codes.add(CodeBlock.of("if (!queryParams.containsKey($S)) { throw new $T($S);}\n",
-                    queryParamKey, JabuRequestError.class, "Not found parameter: %s".formatted(queryParamKey)));
-        }
-
-        // get it as String first.
-        codes.add(CodeBlock.of("String _$N_str = queryParams.getValue($S);\n", paramName, queryParamKey));
-
+    public static void doTypeMapping(List<CodeBlock> codes, VariableElement p, String paramName) {
         var paramType = ClassName.get(p.asType());
         if (paramType.equals(TypeName.get(String.class))) {
             var template = "String _$N = _$N_str;\n";
@@ -135,7 +127,15 @@ public class JabuProcessorUtil {
                 }
                 result.paramNames.add("_" + paramName);
 
-                JabuProcessorUtil.doTypeMapping(result.codes, p, paramName, queryParamKey, qp.required());
+                if (qp.required()) {
+                    result.codes.add(CodeBlock.of("if (!queryParams.containsKey($S)) { throw new $T($S);}\n",
+                            queryParamKey, JabuRequestError.class, "Not found parameter: %s".formatted(queryParamKey)));
+                }
+
+                // get it as String first.
+                result.codes.add(CodeBlock.of("String _$N_str = queryParams.getValue($S);\n", paramName, queryParamKey));
+
+                JabuProcessorUtil.doTypeMapping(result.codes, p, paramName);
 
                 continue;
             }
@@ -146,6 +146,19 @@ public class JabuProcessorUtil {
                     queryParamKey = pv.value();
                 }
                 result.paramNames.add("_" + paramName);
+
+                // try to get the path var
+                result.codes.add(CodeBlock.of("java.util.Optional<String> _$N_str_opt = ctx.getPathVar($S);\n", paramName, queryParamKey));
+
+                // PathVar, once defined, it is mandatory
+                result.codes.add(CodeBlock.of("if (_$N_str_opt.isEmpty()) { throw new $T($S);}\n",
+                        paramName, JabuRequestError.class, "Not found PathVar: %s".formatted(queryParamKey)));
+
+                // get it as String first.
+                result.codes.add(CodeBlock.of("String _$N_str = _$N_str_opt.get();\n", paramName, paramName));
+
+
+                JabuProcessorUtil.doTypeMapping(result.codes, p, paramName);
                 continue;
             }
 

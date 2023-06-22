@@ -1,8 +1,8 @@
-package cn.gzten.util;
+package cn.gzten.jabu.util;
 
-import cn.gzten.jabu.util.JabuUtils;
-import cn.gzten.jabu.util.JsonUtil;
 import org.junit.jupiter.api.Test;
+
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -85,5 +85,42 @@ public class JabuUtilsTests {
         var a = new A();
         JabuUtils.wireBean(a, "hey", "you");
         assertEquals("you", a.hey);
+    }
+
+    @Test
+    public void testGetPathVariables() {
+        var pattern = "/books/{id}";
+        var endpoint = "/books/12";
+
+        var res = JabuUtils.getPathVariables(pattern, endpoint);
+        assertEquals("12", res.get().get("id"));
+
+        pattern = "/books/{id}/details";
+        endpoint = "/books/12/details";
+        res = JabuUtils.getPathVariables(pattern, endpoint);
+        assertEquals("12", res.get().get("id"));
+
+        pattern = "/books/{year}/{month}";
+        endpoint = "/books/2023/12";
+        res = JabuUtils.getPathVariables(pattern, endpoint);
+        assertEquals("2023", res.get().get("year"));
+        assertEquals("12", res.get().get("month"));
+
+        assertTrue(Pattern.compile("/m/a/.*/h").matcher("/m/a/c/ad/h").matches());
+        assertFalse(Pattern.compile("/m/a/.*/h").matcher("/m/a/h").matches());
+        assertTrue(Pattern.compile("/m/a/.*").matcher("/m/a/").matches());
+
+
+        pattern = "/books/{year}/{month}/**";
+        endpoint = "/books/2023/12/hey/you";
+        res = JabuUtils.getPathVariables(pattern, endpoint);
+        assertEquals("2023", res.get().get("year"));
+        assertEquals("12", res.get().get("month"));
+
+        pattern = "/books/*/{year}/{month}";
+        endpoint = "/books/hey/2023/12";
+        res = JabuUtils.getPathVariables(pattern, endpoint);
+        assertEquals("2023", res.get().get("year"));
+        assertEquals("12", res.get().get("month"));
     }
 }

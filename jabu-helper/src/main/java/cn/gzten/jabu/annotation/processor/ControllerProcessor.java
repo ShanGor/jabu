@@ -89,7 +89,7 @@ public class ControllerProcessor {
                                 templatePrefix = """
                                         // for $N.$N: $N
                                         {
-                                          if ($T.matchPath(requestPath, $S, $L)) {
+                                          if ($T.matchPath(ctx, requestPath, $S, $L)) {
                                           """;
 
                                 templateSuffix = """
@@ -107,7 +107,7 @@ public class ControllerProcessor {
                                         {
                                           var methods = new $T[]{$N};
                                           if ($T.httpMethodMatches(requestMethod, methods)) {
-                                            if (JabuUtils.matchPath(requestPath, $S, $L)) {
+                                            if (JabuUtils.matchPath(ctx, requestPath, $S, $L)) {
                                             """;
 
                                 templateSuffix = """

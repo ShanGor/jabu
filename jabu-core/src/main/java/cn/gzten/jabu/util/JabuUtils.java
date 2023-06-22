@@ -1,16 +1,20 @@
 package cn.gzten.jabu.util;
 
 import cn.gzten.jabu.exception.JabuStartUpError;
-import cn.gzten.jabu.pojo.RequestMethod;
 import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.pojo.RequestMethod;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.util.Locale;
+import java.util.*;
 
+import java.util.regex.Pattern;
+
+@Slf4j
 public class JabuUtils {
 
     /**
@@ -136,12 +140,17 @@ public class JabuUtils {
         return false;
     }
 
-    public static boolean matchPath(String pathInRequest, String pathInRequestMapping, boolean regex) {
+    public static boolean matchPath(JabuContext ctx, String pathInRequest, String pathInRequestMapping, boolean regex) {
         if (regex) {
             return pathInRequest.matches(pathInRequestMapping);
         } else {
             if (pathInRequestMapping.contains("{") || pathInRequestMapping.contains("*")) {
-                //TODO to implement
+                var newPattern = convertPathPatternTobeRegex(pathInRequestMapping);
+                if (newPattern.isPresent()) {
+                    var pathVariables = getPathVariables(newPattern, pathInRequest);
+                    ctx.setPathVariables(pathVariables);
+                    return true;
+                }
                 return false;
             } else {
                 return pathInRequestMapping.equals(pathInRequest);
@@ -189,5 +198,63 @@ public class JabuUtils {
             len = ins.read(bf);
         }
         ctx.completeWithStatus(200);
+    }
+
+
+    public static Optional<java.util.Map<String, String>> getPathVariables(String pattern, String endpoint) {
+        return getPathVariables(convertPathPatternTobeRegex(pattern), endpoint);
+    }
+
+    public static Optional<java.util.Map<String, String>> getPathVariables(Optional<Map.Entry<String, List<String>>> regexPattern, String endpoint) {
+        if (regexPattern.isPresent()) {
+            log.debug(regexPattern.get().getKey());
+            var map = new HashMap<String, String>();
+            var m = Pattern.compile(regexPattern.get().getKey()).matcher(endpoint);
+            if (m.matches()) {
+                regexPattern.get().getValue().forEach(k -> {
+                    map.put(k, m.group(k));
+                });
+            }
+            return Optional.of(map);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Convert a path variable pattern to be regex pattern, return along with the path variable names.
+     * @param pattern
+     * @return
+     */
+    public static final Optional<Map.Entry<String, List<String>>> convertPathPatternTobeRegex(final String pattern) {
+        var p = Pattern.compile("(\\{(?<name>[a-zA-Z0-9_\\-]+)\\})");
+        var m = p.matcher(pattern);
+
+        var sb = new StringBuilder();
+        var listOfPathVarNames = new LinkedList<String>();
+
+        var lastPos = 0;
+        while (m.find()) {
+            var pathVarName = m.group("name");
+            var startPos = m.start(1);
+            var endPos = m.end(1);
+
+            listOfPathVarNames.add(pathVarName);
+
+            if (startPos > lastPos) {
+                sb.append(pattern.substring(lastPos, startPos));
+            }
+            sb.append("(?<%s>[^/]+)".formatted(pathVarName));
+            lastPos = endPos;
+        }
+
+        if (pattern.length() > lastPos) {
+            sb.append(pattern.substring(lastPos));
+        }
+
+        return Optional.of(Map.entry(sb.toString()
+                        .replace("/**", "/.*")
+                        .replace("/*", "/[^/]*"),
+                listOfPathVarNames));
     }
 }

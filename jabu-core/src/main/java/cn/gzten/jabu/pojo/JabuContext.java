@@ -17,6 +17,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JabuContext {
@@ -29,6 +30,19 @@ public class JabuContext {
 
     @Setter
     private int downloadBufferSize = 4096;
+
+    @Setter
+    private Optional<Map<String, String>> pathVariables = Optional.empty();
+
+    public boolean existsPathVar(String key) {
+        if (pathVariables.isEmpty()) return false;
+        return pathVariables.get().containsKey(key);
+    }
+
+    public Optional<String> getPathVar(String key) {
+        if (existsPathVar(key)) return Optional.of(pathVariables.get().get(key));
+        return Optional.empty();
+    }
 
     public JabuContext(Request request, Response response, Callback callback) {
         this.request = request;

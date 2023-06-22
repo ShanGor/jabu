@@ -1,6 +1,5 @@
-package cn.gzten.pojo;
+package cn.gzten.jabu.pojo;
 
-import cn.gzten.jabu.pojo.JabuContext;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
