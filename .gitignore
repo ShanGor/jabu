@@ -1,2 +1,7 @@
-/j-sim-helper/target/
+/jabu-helper/target/
+/jabu-helper/.idea/
+/jabu-core/target/
+/jabu-core/.idea/
+/jabu-example/target/
+/jabu-example/.idea/
 /.idea/
