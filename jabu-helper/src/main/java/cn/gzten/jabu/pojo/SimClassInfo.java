@@ -1,4 +1,4 @@
-package cn.gzten.sim.pojo;
+package cn.gzten.jabu.pojo;
 
 import com.squareup.javapoet.TypeName;
 

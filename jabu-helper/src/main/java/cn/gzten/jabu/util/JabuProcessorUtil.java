@@ -1,11 +1,10 @@
-package cn.gzten.sim.util;
+package cn.gzten.jabu.util;
 
-import cn.gzten.annotation.PathVar;
-import cn.gzten.annotation.QueryParam;
-import cn.gzten.annotation.RequestBody;
-import cn.gzten.exception.SimRequestError;
-import cn.gzten.pojo.SimContext;
-import cn.gzten.util.JsonUtil;
+import cn.gzten.jabu.annotation.PathVar;
+import cn.gzten.jabu.annotation.QueryParam;
+import cn.gzten.jabu.annotation.RequestBody;
+import cn.gzten.jabu.exception.JabuRequestError;
+import cn.gzten.jabu.pojo.JabuContext;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -18,11 +17,11 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SimProcessorUtil {
+public class JabuProcessorUtil {
     public static void doTypeMapping(List<CodeBlock> codes, VariableElement p, String paramName, String queryParamKey, boolean mandatory) {
         if (mandatory) {
             codes.add(CodeBlock.of("if (!queryParams.containsKey($S)) { throw new $T($S);}\n",
-                    queryParamKey, SimRequestError.class, "Not found parameter: %s".formatted(queryParamKey)));
+                    queryParamKey, JabuRequestError.class, "Not found parameter: %s".formatted(queryParamKey)));
         }
 
         // get it as String first.
@@ -136,7 +135,7 @@ public class SimProcessorUtil {
                 }
                 result.paramNames.add("_" + paramName);
 
-                SimProcessorUtil.doTypeMapping(result.codes, p, paramName, queryParamKey, qp.required());
+                JabuProcessorUtil.doTypeMapping(result.codes, p, paramName, queryParamKey, qp.required());
 
                 continue;
             }
@@ -153,12 +152,12 @@ public class SimProcessorUtil {
             var rb = p.getAnnotation(RequestBody.class);
             if (rb != null) {
                 result.paramNames.add("_" + paramName);
-                SimProcessorUtil.doRequestBody(result.codes, p, paramName);
+                JabuProcessorUtil.doRequestBody(result.codes, p, paramName);
                 continue;
             }
 
-            // If the parameter is asking for SimContext, give it
-            if (elementIsType(p, SimContext.class)) {
+            // If the parameter is asking for JabuContext, give it
+            if (elementIsType(p, JabuContext.class)) {
                 result.paramNames.add("_" + paramName);
                 result.codes.add(CodeBlock.of("var _$N = ctx;\n", paramName));
                 continue;

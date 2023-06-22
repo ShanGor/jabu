@@ -1,12 +1,11 @@
-package cn.gzten.sim.annotation.processor;
+package cn.gzten.jabu.annotation.processor;
 
-import cn.gzten.annotation.Controller;
-import cn.gzten.sim.pojo.SimClassInfo;
-import com.google.common.reflect.TypeToken;
+import cn.gzten.jabu.annotation.Controller;
+import cn.gzten.jabu.pojo.SimClassInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class JSimProcessorTest {
+public class JabuProcessorTest {
     @Test
     public void testClassname() {
         System.out.println(Controller.class.getCanonicalName());

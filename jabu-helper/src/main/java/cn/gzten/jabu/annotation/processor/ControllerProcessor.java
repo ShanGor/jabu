@@ -1,11 +1,11 @@
-package cn.gzten.sim.annotation.processor;
+package cn.gzten.jabu.annotation.processor;
 
-import cn.gzten.annotation.Controller;
-import cn.gzten.annotation.RequestMapping;
-import cn.gzten.pojo.RequestMethod;
-import cn.gzten.sim.pojo.SimClassInfo;
-import cn.gzten.sim.util.SimProcessorUtil;
-import cn.gzten.util.SimUtils;
+import cn.gzten.jabu.annotation.Controller;
+import cn.gzten.jabu.annotation.RequestMapping;
+import cn.gzten.jabu.pojo.RequestMethod;
+import cn.gzten.jabu.pojo.SimClassInfo;
+import cn.gzten.jabu.util.JabuProcessorUtil;
+import cn.gzten.jabu.util.JabuUtils;
 import com.squareup.javapoet.*;
 import org.eclipse.jetty.util.StringUtil;
 
@@ -70,7 +70,7 @@ public class ControllerProcessor {
                         if (reqMapAnnotation != null) {
                             System.out.println("Found request mapping method: " + method.getSimpleName().toString());
 
-                            var methodParamParseResult = SimProcessorUtil.prepareMethodParameters(method.getParameters());
+                            var methodParamParseResult = JabuProcessorUtil.prepareMethodParameters(method.getParameters());
 
                             var uniqueRouteEntry = reqMapAnnotation.path() + "." + RequestMethod.serializeArray(reqMapAnnotation.method());
                             if (existingRoutes.contains(uniqueRouteEntry)) {
@@ -85,7 +85,7 @@ public class ControllerProcessor {
                             String templatePrefix;
                             String templateSuffix;
                             String blankPrefix;
-                            if (SimUtils.isEmpty(reqMapAnnotation.method()) ) {
+                            if (JabuUtils.isEmpty(reqMapAnnotation.method()) ) {
                                 templatePrefix = """
                                         // for $N.$N: $N
                                         {
@@ -100,14 +100,14 @@ public class ControllerProcessor {
                                 blankPrefix = "    ";
 
                                 tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), reqMapAnnotation.path(),
-                                        SimUtils.class, reqMapAnnotation.path(), reqMapAnnotation.regex());
+                                        JabuUtils.class, reqMapAnnotation.path(), reqMapAnnotation.regex());
                             } else {
                                 templatePrefix = """
                                         // for $N.$N: $N
                                         {
                                           var methods = new $T[]{$N};
                                           if ($T.httpMethodMatches(requestMethod, methods)) {
-                                            if (SimUtils.matchPath(requestPath, $S, $L)) {
+                                            if (JabuUtils.matchPath(requestPath, $S, $L)) {
                                             """;
 
                                 templateSuffix = """
@@ -120,7 +120,7 @@ public class ControllerProcessor {
 
                                 tryProcessRouteMethodBuilder.addCode(templatePrefix, classFullName, method.getSimpleName().toString(), reqMapAnnotation.path(),
                                         RequestMethod.class, RequestMethod.serializeArray(reqMapAnnotation.method()),
-                                        SimUtils.class,
+                                        JabuUtils.class,
                                         reqMapAnnotation.path(), reqMapAnnotation.regex());
                             }
 

@@ -1,8 +1,8 @@
-package cn.gzten.sim.annotation.processor;
+package cn.gzten.jabu.annotation.processor;
 
-import cn.gzten.annotation.*;
-import cn.gzten.pojo.SimContext;
-import cn.gzten.sim.JSimEntry;
+import cn.gzten.jabu.annotation.*;
+import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.JabuEntry;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 
@@ -14,7 +14,7 @@ import java.util.*;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_19)
 @AutoService(Processor.class)
-public class JSimProcessor extends AbstractProcessor {
+public class JabuProcessor extends AbstractProcessor {
     private Filer filer;
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -31,7 +31,7 @@ public class JSimProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         var classSpecBuilder = TypeSpec.classBuilder("JSimEntryImpl")
-                .superclass(JSimEntry.class)
+                .superclass(JabuEntry.class)
                 .addModifiers(Modifier.PUBLIC);
         var getBeanMethodBuilder = MethodSpec.methodBuilder("getBean")
                 .addAnnotation(Override.class)
@@ -43,7 +43,7 @@ public class JSimProcessor extends AbstractProcessor {
         var tryProcessRouteMethodBuilder = MethodSpec.methodBuilder("tryProcessRoute")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(SimContext.class, "ctx");
+                .addParameter(JabuContext.class, "ctx");
 
         // Process @Controller cases
         var processResult = ControllerProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, tryProcessRouteMethodBuilder );
