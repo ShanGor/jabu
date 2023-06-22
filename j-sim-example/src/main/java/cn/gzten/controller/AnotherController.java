@@ -30,9 +30,17 @@ public class AnotherController {
             ctx.setDownloadBufferSize(BUF_SIZE);
 
             ctx.serveByteChannelToDownload(Files.newByteChannel(path, StandardOpenOption.READ), fileName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    @RequestMapping(path = "/test-download-classpath")
+    public void testDownloadClassPathFile(SimContext ctx) {
+        try {
+            var fileName = "test-cases.txt";
+            var ins = this.getClass().getClassLoader().getResourceAsStream(fileName);
 
-            // stream version:
-//            ctx.serveInputStreamToDownload(Files.newInputStream(path, StandardOpenOption.READ), fileName);
+            ctx.serveInputStreamToDownload(ins, fileName);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
