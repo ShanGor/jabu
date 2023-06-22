@@ -2,8 +2,13 @@ package cn.gzten.util;
 
 import cn.gzten.exception.SimStartUpError;
 import cn.gzten.pojo.RequestMethod;
+import cn.gzten.pojo.SimContext;
 import org.eclipse.jetty.util.StringUtil;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.util.Locale;
 
 public class SimUtils {
@@ -142,5 +147,47 @@ public class SimUtils {
                 return pathInRequestMapping.equals(pathInRequest);
             }
         }
+    }
+
+    /**
+     * Serve a byte channel as a download file.
+     * @param channel
+     * @param ctx
+     * @param BUF_SIZE
+     * @param fileName
+     * @throws IOException
+     */
+    public static void serveChannelToDownload(ByteChannel channel, SimContext ctx, int BUF_SIZE, String fileName) throws IOException {
+        var bf = ByteBuffer.allocate(BUF_SIZE);
+        ctx.addHeader("Content-Disposition", "attachment; filename=\"%s\"".formatted(fileName));
+        while(channel.read(bf) > 0) {
+            if (bf.position() == BUF_SIZE) {
+                bf.rewind();
+                ctx.write(bf);
+            } else {
+                ctx.write(bf.array(), 0, bf.position());
+            }
+            bf.clear();
+        }
+        ctx.completeWithStatus(200);
+    }
+
+    /**
+     * Serve an input stream as a download file.
+     * @param ins
+     * @param ctx
+     * @param BUF_SIZE
+     * @param fileName
+     * @throws IOException
+     */
+    public static void serveInputStreamToDownload(InputStream ins, SimContext ctx, int BUF_SIZE, String fileName) throws IOException {
+        var bf = new byte[BUF_SIZE];
+        ctx.addHeader("Content-Disposition", "attachment; filename=\"%s\"".formatted(fileName));
+        int len = ins.read(bf);
+        while(len > 0) {
+            ctx.write(bf, 0, len);
+            len = ins.read(bf);
+        }
+        ctx.completeWithStatus(200);
     }
 }

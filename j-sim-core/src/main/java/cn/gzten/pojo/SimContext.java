@@ -1,6 +1,8 @@
 package cn.gzten.pojo;
 
+import cn.gzten.util.SimUtils;
 import lombok.Getter;
+import lombok.Setter;
 import org.eclipse.jetty.io.ByteBufferInputStream;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -9,8 +11,11 @@ import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.UrlEncoded;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,6 +26,9 @@ public class SimContext {
     private Response response;
     @Getter
     private Callback callback;
+
+    @Setter
+    private int downloadBufferSize = 4096;
 
     public SimContext(Request request, Response response, Callback callback) {
         this.request = request;
@@ -98,6 +106,26 @@ public class SimContext {
      */
     public void write(byte[] bytes, int offset, int len) {
         write(ByteBuffer.wrap(bytes, offset, len));
+    }
+
+    /**
+     * Serve a ByteChannel as a download file. Default buffer_size is 4096, please change it by ctx.setDownloadBufferSize(int)
+     * @param channel
+     * @param fileName
+     * @throws IOException
+     */
+    public void serveByteChannelToDownload(ByteChannel channel, String fileName) throws IOException {
+        SimUtils.serveChannelToDownload(channel, this, downloadBufferSize, fileName);
+    }
+
+    /**
+     * Serve an input stream as a download file. Default buffer_size is 4096, please change it by ctx.setDownloadBufferSize(int)
+     * @param ins
+     * @param fileName
+     * @throws IOException
+     */
+    public void serveInputStreamToDownload(InputStream ins, String fileName) throws IOException {
+        SimUtils.serveInputStreamToDownload(ins, this, downloadBufferSize, fileName);
     }
 
     /**
