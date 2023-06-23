@@ -1,6 +1,6 @@
 package cn.gzten.jabu;
 
-import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.core.JabuContext;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

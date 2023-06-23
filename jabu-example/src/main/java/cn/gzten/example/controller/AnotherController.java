@@ -2,7 +2,7 @@ package cn.gzten.example.controller;
 
 import cn.gzten.jabu.annotation.Controller;
 import cn.gzten.jabu.annotation.Route;
-import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.core.JabuContext;
 import lombok.Data;
 import lombok.Setter;
 

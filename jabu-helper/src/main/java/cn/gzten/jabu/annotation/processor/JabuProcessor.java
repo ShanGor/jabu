@@ -1,7 +1,7 @@
 package cn.gzten.jabu.annotation.processor;
 
 import cn.gzten.jabu.annotation.*;
-import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.core.JabuContext;
 import cn.gzten.jabu.JabuEntry;
 import cn.gzten.jabu.pojo.SimClassInfo;
 import com.google.auto.service.AutoService;

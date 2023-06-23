@@ -1,4 +1,4 @@
-package cn.gzten.jabu.pojo;
+package cn.gzten.jabu.core;
 
 import cn.gzten.jabu.util.JabuUtils;
 import lombok.Getter;
@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JabuContext {

@@ -2,7 +2,7 @@ package cn.gzten.jabu;
 
 import cn.gzten.jabu.exception.ExceptionHandleResponse;
 import cn.gzten.jabu.exception.JabuExceptionHandler;
-import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.core.JabuContext;
 import cn.gzten.jabu.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.*;

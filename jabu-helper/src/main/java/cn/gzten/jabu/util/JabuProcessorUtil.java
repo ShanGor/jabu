@@ -4,7 +4,7 @@ import cn.gzten.jabu.annotation.PathVar;
 import cn.gzten.jabu.annotation.QueryParam;
 import cn.gzten.jabu.annotation.RequestBody;
 import cn.gzten.jabu.exception.JabuRequestError;
-import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.core.JabuContext;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;

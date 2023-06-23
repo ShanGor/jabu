@@ -1,7 +1,7 @@
 package cn.gzten.jabu.util;
 
 import cn.gzten.jabu.exception.JabuStartUpError;
-import cn.gzten.jabu.pojo.JabuContext;
+import cn.gzten.jabu.core.JabuContext;
 import cn.gzten.jabu.pojo.RequestMethod;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
