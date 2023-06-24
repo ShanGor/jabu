@@ -16,6 +16,7 @@ import javax.lang.model.element.VariableElement;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 public class JabuProcessorUtil {
@@ -189,5 +190,32 @@ public class JabuProcessorUtil {
     public static class MethodParameterResult {
         public List<String> paramNames = new LinkedList<>();
         public List<CodeBlock> codes = new LinkedList<>();
+    }
+
+    public static final String toCamelCase(final String str) {
+        if (str == null) return null;
+        if (str.length() == 1) {
+            return str.toLowerCase(Locale.ROOT);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(str.substring(0, 1).toLowerCase(Locale.ROOT));
+        sb.append(str.substring(1));
+        return sb.toString();
+    }
+
+    public static final String capitalize(final String str) {
+        if (str == null) return null;
+        if (str.length() == 1) {
+            return str.toUpperCase(Locale.ROOT);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(str.substring(0, 1).toUpperCase(Locale.ROOT));
+        sb.append(str.substring(1));
+        return sb.toString();
+    }
+
+    public static void fail(String message) {
+        System.err.println(message);
+        throw new RuntimeException(message);
     }
 }

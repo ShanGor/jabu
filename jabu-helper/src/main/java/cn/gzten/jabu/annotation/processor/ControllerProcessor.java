@@ -12,7 +12,6 @@ import org.eclipse.jetty.util.StringUtil;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,28 +39,18 @@ public class ControllerProcessor {
             System.out.println("Pre-processing: " + classFullName);
 
             var classInfo = SimClassInfo.from(classFullName, e);
+
+            // If the Controller defined customized name, use it, if no, use camel case of the class name as the bean name
             if (StringUtil.isNotBlank(controllerAnnotation.name())) {
                 nameRef.set(controllerAnnotation.name());
             } else {
                 nameRef.set(classInfo.getClassNameCamelCase());
             }
 
-            // $L(for Literals), $S(for Strings), $T(for Types), $N(for Names), as placeholders
-            try {
-                FieldSpec fieldSpec = FieldSpec.builder(classInfo.getTypeName(), nameRef.get())
-                        .addModifiers(Modifier.PRIVATE)
-                        .build();
-                getBeanMethodBuilder.addCode(CodeBlock.of("if($N.equals(beanName)) return $N;\n", nameRef.get(), nameRef.get()));
-                initMethodBuilder.addCode("$N = new $N();\n", nameRef.get(), classInfo.className);
-
-                initMethodBuilder.addCode("fillBean($N.class, $S, $N);", classInfo.className,
-                        nameRef.get(), nameRef.get());
-
-                classSpecBuilder.addOriginatingElement(e)
-                        .addField(fieldSpec);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            // Process Bean Basics and Pre-process Injections
+            BeanAndServiceProcessor.cacheBeanName(classInfo.getTypeName(), nameRef.get());
+            BeanAndServiceProcessor.addFillBeanCodeBlock(classInfo, nameRef.get(), e, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
+            BeanAndServiceProcessor.fillPendingInjections(e, nameRef.get());
 
             for (Element el : e.getEnclosedElements()){
                 if (el instanceof ExecutableElement) {
@@ -77,9 +66,7 @@ public class ControllerProcessor {
 
                             var uniqueRouteEntry = requestPathPattern + "." + RequestMethod.serializeArray(reqMapAnnotation.method());
                             if (existingRoutes.contains(uniqueRouteEntry)) {
-                                var errMsg = "Duplicate route entry found: " + uniqueRouteEntry;
-                                System.err.println(errMsg);
-                                throw new RuntimeException(errMsg);
+                                JabuProcessorUtil.fail("Duplicate route entry found: " + uniqueRouteEntry);
                             } else {
                                 existingRoutes.add(uniqueRouteEntry);
                             }
@@ -142,7 +129,7 @@ public class ControllerProcessor {
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
                                         .addStatement("ctx.withStatus(200)");
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                        .addStatement("var _res = $N.$N($N);", nameRef.get(), method.getSimpleName().toString(), String.join(", ", methodParamParseResult.paramNames));
+                                        .addStatement("var _res = $N.$N($N)", nameRef.get(), method.getSimpleName().toString(), String.join(", ", methodParamParseResult.paramNames));
 
                                 // Different return type, different handling way
                                 if (returnType.isPrimitive()) {

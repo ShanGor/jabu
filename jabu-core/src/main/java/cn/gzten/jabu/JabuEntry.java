@@ -6,32 +6,29 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class JabuEntry {
-    protected Map<Class, Map<String, Object>> beans = new ConcurrentHashMap<>();
+
+    protected Map<String, Object> beans = new ConcurrentHashMap<>();
 
     abstract public Object getBean(String beanName);
+
+    public Object getBeanInMap(String name) {
+        return beans.get(name);
+    }
 
     abstract public void init();
 
     /**
      * Used for compile time generation, it will be run during application start up.
-     * @param clazz
      * @param beanName
      * @param bean
      */
-    public void fillBean(Class clazz, String beanName, Object bean) {
-        Map<String, Object> m;
-        if (beans.containsKey(clazz)) {
-            m = beans.get(clazz);
-            if (m.containsKey(beanName)) {
-                var errMsg = "Bean " + clazz.getCanonicalName() + " already exists!";
-                System.err.println(errMsg);
-                throw new RuntimeException(errMsg);
-            }
-        } else {
-            m = new ConcurrentHashMap<>();
-            beans.put(clazz, m);
+    public void fillBean(String beanName, Object bean) {
+        if (beans.containsKey(beanName)) {
+            var errMsg = "Bean " + beanName + " already exists!";
+            System.err.println(errMsg);
+            throw new RuntimeException(errMsg);
         }
-        m.put(beanName, bean);
+        beans.put(beanName, bean);
     }
 
     abstract public void tryProcessRoute(JabuContext ctx);

@@ -3,7 +3,9 @@ package cn.gzten.jabu.annotation.processor;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.core.JabuContext;
 import cn.gzten.jabu.JabuEntry;
+import cn.gzten.jabu.pojo.PendingInjection;
 import cn.gzten.jabu.pojo.SimClassInfo;
+import cn.gzten.jabu.util.JabuProcessorUtil;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 
@@ -26,11 +28,27 @@ public class JabuProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(JabuBoot.class.getCanonicalName(), Controller.class.getCanonicalName());
+        return Set.of(JabuBoot.class.getCanonicalName(),
+                Bean.class.getCanonicalName(),
+                Service.class.getCanonicalName(),
+                Controller.class.getCanonicalName());
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        // Process the @JabuBoot main class, to initialize the Entry Class Path
+        var elements = roundEnv.getElementsAnnotatedWith(JabuBoot.class);
+        if (elements.isEmpty()) return false;
+        if (elements.size() != 1) {
+            JabuProcessorUtil.fail("Found 0 / more-than-1 @JabuBoot classes, compile failed!");
+        }
+        Element bootMain = (Element) elements.toArray()[0];
+        String classFullName = bootMain.toString();
+        var bootClassInfo = SimClassInfo.from(classFullName, bootMain);
+
+        /**
+         * Init the JabuEntryImpl
+         */
         var classSpecBuilder = TypeSpec.classBuilder("JabuEntryImpl")
                 .superclass(JabuEntry.class)
                 .addModifiers(Modifier.PUBLIC);
@@ -46,19 +64,16 @@ public class JabuProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(JabuContext.class, "ctx");
 
-        var elements = roundEnv.getElementsAnnotatedWith(JabuBoot.class);
-        if (elements.isEmpty()) return false;
-        if (elements.size() != 1) {
-            System.err.println("Found 0 / more-than-1 @JabuBoot classes, compile failed!");
-            throw new RuntimeException("Found 0 / more-than-1 @JabuBoot classes, compile failed!");
-        }
-        Element bootMain = (Element) elements.toArray()[0];
-        String classFullName = bootMain.toString();
-        var bootClassInfo = SimClassInfo.from(classFullName, bootMain);
-
         // Process @Controller cases
         var processResult = ControllerProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, tryProcessRouteMethodBuilder );
         if (processResult == false) return false;
+
+        // Process @Bean and @Service cases
+        BeanAndServiceProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Bean.class);
+        BeanAndServiceProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Service.class);
+
+        // Process injections
+        BeanAndServiceProcessor.addInjectionStatements(initMethodBuilder);
 
         getBeanMethodBuilder.addCode(CodeBlock.of("\nreturn null;"));
 

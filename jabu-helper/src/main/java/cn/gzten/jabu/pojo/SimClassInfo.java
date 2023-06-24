@@ -1,9 +1,9 @@
 package cn.gzten.jabu.pojo;
 
+import cn.gzten.jabu.util.JabuProcessorUtil;
 import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.element.Element;
-import java.util.Locale;
 
 public class SimClassInfo {
     public String packageName;
@@ -13,14 +13,12 @@ public class SimClassInfo {
     private Element element;
 
     public String getClassNameCamelCase() {
-        if (className == null) return null;
-        if (className.length() == 1) {
-            return className.toLowerCase(Locale.ROOT);
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append(className.substring(0, 1).toLowerCase(Locale.ROOT));
-        sb.append(className.substring(1));
-        return sb.toString();
+        return JabuProcessorUtil.toCamelCase(className);
+    }
+
+    public static String convertTypeNameToSimpleCamelCase(TypeName typeName) {
+        var tokens = typeName.toString().split("\\.");
+        return JabuProcessorUtil.toCamelCase(tokens[tokens.length - 1]);
     }
 
     public static final SimClassInfo from(final String classFullName, final Element e) {

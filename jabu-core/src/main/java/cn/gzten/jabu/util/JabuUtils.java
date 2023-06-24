@@ -64,12 +64,12 @@ public class JabuUtils {
     }
 
     /**
-     * Used to do @AutoWired
+     * Used to do @Inject
      * @param obj
      * @param fieldName
      * @param bean
      */
-    public static void wireBean(Object obj, String fieldName, Object bean) {
+    public static void injectBean(Object obj, String fieldName, Object bean) {
         try {
             var field = obj.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
@@ -148,6 +148,8 @@ public class JabuUtils {
                 var newPattern = convertPathPatternTobeRegex(pathInRequestMapping);
                 if (newPattern.isPresent()) {
                     var pathVariables = getPathVariables(newPattern, pathInRequest);
+                    if (pathVariables.isEmpty()) return false;
+
                     ctx.setPathVariables(pathVariables);
                     return true;
                 }
@@ -214,6 +216,8 @@ public class JabuUtils {
                 regexPattern.get().getValue().forEach(k -> {
                     map.put(k, m.group(k));
                 });
+            } else {
+                return Optional.empty();
             }
             return Optional.of(map);
         }

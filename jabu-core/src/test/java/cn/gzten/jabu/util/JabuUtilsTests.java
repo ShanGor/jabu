@@ -78,12 +78,12 @@ public class JabuUtilsTests {
     }
 
     @Test
-    public void testWireBean() {
+    public void testInjectBean() {
         class A {
             private String hey;
         }
         var a = new A();
-        JabuUtils.wireBean(a, "hey", "you");
+        JabuUtils.injectBean(a, "hey", "you");
         assertEquals("you", a.hey);
     }
 

@@ -1,14 +1,21 @@
 package cn.gzten.example.controller;
 
+import cn.gzten.example.bean.SimpleBeans;
+import cn.gzten.example.service.TestService;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.pojo.RequestMethod;
 import lombok.Data;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
 
 @Controller
 public class MainController {
+    @Inject
+    @Setter
+    TestService testService;
+
     @Route(path = "/hello", method = RequestMethod.GET)
     public String hello(@QueryParam("name") String nameForHello) {
         return "Hello, %s".formatted(nameForHello);
@@ -47,6 +54,11 @@ public class MainController {
     @Route(path = "/test", method = RequestMethod.POST)
     public String postHey(@RequestBody List<Hey> hey) {
         return "Greeting from %s".formatted(hey.get(0).hey);
+    }
+
+    @Route(path = "/test-inject")
+    public SimpleBeans.World testInject() {
+        return testService.getWorld();
     }
 
     @Data

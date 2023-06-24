@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JabuContext {
