@@ -3,7 +3,6 @@ package cn.gzten.jabu.annotation.processor;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.core.JabuContext;
 import cn.gzten.jabu.JabuEntry;
-import cn.gzten.jabu.pojo.PendingInjection;
 import cn.gzten.jabu.pojo.SimClassInfo;
 import cn.gzten.jabu.util.JabuProcessorUtil;
 import com.google.auto.service.AutoService;
@@ -30,6 +29,7 @@ public class JabuProcessor extends AbstractProcessor {
     public Set<String> getSupportedAnnotationTypes() {
         return Set.of(JabuBoot.class.getCanonicalName(),
                 Bean.class.getCanonicalName(),
+                HasBean.class.getCanonicalName(),
                 Service.class.getCanonicalName(),
                 Controller.class.getCanonicalName());
     }
@@ -69,11 +69,12 @@ public class JabuProcessor extends AbstractProcessor {
         if (processResult == false) return false;
 
         // Process @Bean and @Service cases
-        BeanAndServiceProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Bean.class);
-        BeanAndServiceProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Service.class);
+        BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Bean.class);
+        BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Service.class);
+        BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, HasBean.class);
 
         // Process injections
-        BeanAndServiceProcessor.addInjectionStatements(initMethodBuilder);
+        BeanProcessor.addInjectionStatements(initMethodBuilder);
 
         getBeanMethodBuilder.addCode(CodeBlock.of("\nreturn null;"));
 

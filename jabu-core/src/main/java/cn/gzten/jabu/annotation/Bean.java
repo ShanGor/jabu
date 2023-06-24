@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * To annotate a POJO as DynamoBean, will also register it as RegisterReflection. to add to reflect-config.json
  * automatically.
  */
-@Target({ElementType.TYPE})
+@Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.SOURCE)
 public @interface Bean {
     String name() default "";

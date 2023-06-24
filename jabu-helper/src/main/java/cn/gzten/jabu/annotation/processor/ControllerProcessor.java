@@ -48,9 +48,9 @@ public class ControllerProcessor {
             }
 
             // Process Bean Basics and Pre-process Injections
-            BeanAndServiceProcessor.cacheBeanName(classInfo.getTypeName(), nameRef.get());
-            BeanAndServiceProcessor.addFillBeanCodeBlock(classInfo, nameRef.get(), e, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
-            BeanAndServiceProcessor.fillPendingInjections(e, nameRef.get());
+            BeanProcessor.cacheBeanName(classInfo.getTypeName(), nameRef.get());
+            BeanProcessor.addFillBeanCodeBlock(classInfo, nameRef.get(), classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
+            BeanProcessor.fillPendingInjectionFields(e, nameRef.get());
 
             for (Element el : e.getEnclosedElements()){
                 if (el instanceof ExecutableElement) {

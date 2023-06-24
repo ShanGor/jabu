@@ -5,9 +5,12 @@ import cn.gzten.jabu.util.JabuProcessorUtil;
 import com.squareup.javapoet.TypeName;
 import org.eclipse.jetty.util.StringUtil;
 
-public class PendingInjection {
+public class PendingInjectionField {
     public TypeName fieldType;
-    public String beanName;
+    /**
+     * This field belongs to an object, the object is a bean kept in the memory.
+     */
+    public String objectName;
     public String fieldName;
 
     public String qualifier;
