@@ -16,7 +16,7 @@ Aim to provide a lightweight framework to write web applications.
 ## Limitations
 - @Bean can be used to mark a class, and a method.  
   But when it is used to mark a method, the method needs to be `static`.  
-  @Bean created at methods, does not support to inject to super classes.
+  @Bean created at methods, does not support to inject to super classes defined in this project, but would support those imported from Maven/Gradle. (Because the super class / interfaces defined in this project is not yet compiled.)
 - @Bean, @Controller, @Service, same level thing, cannot be used to the same class.
 
 ## TODO

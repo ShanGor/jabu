@@ -1,8 +1,10 @@
 package cn.gzten.example.controller;
 
 import cn.gzten.jabu.annotation.Controller;
+import cn.gzten.jabu.annotation.Inject;
 import cn.gzten.jabu.annotation.Route;
 import cn.gzten.jabu.core.JabuContext;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
 import lombok.Setter;
 
@@ -17,6 +19,11 @@ import java.nio.file.StandardOpenOption;
 @Controller(basePath = "/api")
 @Data
 public class AnotherController {
+
+    @Inject
+    @Setter
+    HikariDataSource dataSource;
+
     @Setter
     private String hello;
     @Route(path = "/test-another")
