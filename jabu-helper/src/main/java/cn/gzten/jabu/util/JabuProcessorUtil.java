@@ -15,6 +15,7 @@ import org.eclipse.jetty.util.StringUtil;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -209,7 +210,15 @@ public class JabuProcessorUtil {
     }
 
     public static boolean elementIsType(Element e, Class clazz) {
-        return TypeName.get(clazz).equals(TypeName.get(e.asType()));
+        return typeMirrorIsType(e.asType(), clazz);
+    }
+
+    public static boolean typeMirrorIsType(TypeMirror tm, Class clazz) {
+        return typeNameIsType(TypeName.get(tm), clazz);
+    }
+
+    public static boolean typeNameIsType(TypeName tn, Class clazz) {
+        return TypeName.get(clazz).equals(tn);
     }
 
     public static class MethodParameterResult {

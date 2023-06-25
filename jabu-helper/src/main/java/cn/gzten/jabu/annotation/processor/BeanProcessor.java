@@ -15,6 +15,7 @@ import org.eclipse.jetty.util.StringUtil;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -65,10 +66,17 @@ public class BeanProcessor {
 
         String classFullName = element.toString();
         System.out.println("Pre-processing bean: " + classFullName);
+        var supers = new LinkedList<TypeName>();
+        // prepare the supers, for interfaces
         element.getInterfaces().forEach(m -> {
-            System.out.println("\t interfaces " + m.toString());
+            if (JabuProcessorUtil.typeMirrorIsType(m, Serializable.class)) return;
+            if (m.toString().startsWith("java.lang")) return;
+            supers.add(TypeName.get(m));
         });
-        System.out.println("\t Super class " + element.getSuperclass());
+        // prepare the supers, for its super class
+        if (!element.getSuperclass().toString().startsWith("java.lang")) {
+            supers.add(TypeName.get(element.getSuperclass()));
+        }
 
         var classInfo = SimClassInfo.from(classFullName, element);
         Method nameMethod;
@@ -90,7 +98,9 @@ public class BeanProcessor {
                 } else {
                     nameRef.set(classInfo.getClassNameCamelCase());
                 }
-                cacheBeanName(classInfo.getTypeName(), nameRef.get());
+                cacheBeanName(classInfo.getTypeName(), nameRef.get(), false);
+                supers.forEach(sp -> cacheBeanName(sp, nameRef.get(), true));
+
             } catch (InvocationTargetException|IllegalAccessException ex) {
                 ex.printStackTrace();
                 JabuProcessorUtil.fail("Fatal error at doBeanBasics!");
@@ -102,7 +112,8 @@ public class BeanProcessor {
         }
     }
 
-    public static void preprocessMethodBean(TypeElement clazz, ExecutableElement element,
+    public static void preprocessMethodBean(TypeElement methodBelongsToClass,
+                                            ExecutableElement element,
                                             TypeSpec.Builder classSpecBuilder,
                                             MethodSpec.Builder initMethodBuilder,
                                             MethodSpec.Builder getBeanMethodBuilder) {
@@ -121,18 +132,36 @@ public class BeanProcessor {
         } else {
             nameRef.set(SimClassInfo.convertTypeNameToSimpleCamelCase(TypeName.get(returnType)));
         }
+
         // Cache all the bean name for future processing.
-        cacheBeanName(TypeName.get(returnType), nameRef.get());
+        cacheBeanName(TypeName.get(returnType), nameRef.get(), false);
+        try {
+            var clz = Class.forName(returnType.toString());
+            for(var in : clz.getInterfaces()) {
+                if (in.equals(Serializable.class)) continue;
+                if (in.getCanonicalName().startsWith("java.lang")) continue;
+
+                cacheBeanName(TypeName.get(in), nameRef.get(), false);
+            }
+            if (clz.getSuperclass() != null && !clz.getSuperclass().getCanonicalName().startsWith("java.lang")) {
+                cacheBeanName(TypeName.get(clz.getSuperclass()), nameRef.get(), false);
+            }
+        } catch (ClassNotFoundException e) {
+            System.out.println("Cannot load class during compile time: " + returnType);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+        }
 
         // Very simple no dependency
         if (params.isEmpty()) {
-            addFillBeanCodeBlockForMethodBeanWithEmptyParams(clazz.asType(), returnType, nameRef.get(),
+            addFillBeanCodeBlockForMethodBeanWithEmptyParams(methodBelongsToClass.asType(), returnType, nameRef.get(),
                     element.getSimpleName().toString(),
                     classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
         } else {
             var o = new PendingInjectMethodWithDependency();
             o.returnType = TypeName.get(returnType);
-            o.belongToClassType = TypeName.get(clazz.asType());
+            o.belongToClassType = TypeName.get(methodBelongsToClass.asType());
             o.methodName = element.getSimpleName().toString();
             o.methodBeanName = nameRef.get();
             for (var param : params) {
@@ -189,7 +218,7 @@ public class BeanProcessor {
             getBeanMethodBuilder.addCode(CodeBlock.of("if($S.equals(beanName)) return $N;\n", beanName, beanName));
             initMethodBuilder.addStatement("$N = new $T()", beanName, classInfo.getTypeName());
 
-            //TODO: add implemented interfaces and superclass (only one layer, exclude Object)
+            //TODO: add implemented interfaces (excluding Serializable) and superclass (only one layer, exclude Object)
             initMethodBuilder.addStatement("fillBean($S, $N)", beanName, beanName);
 
             classSpecBuilder.addField(fieldSpec);
@@ -334,11 +363,13 @@ public class BeanProcessor {
         return Optional.empty();
     }
 
-    public static void cacheBeanName(TypeName typeName, String beanName) {
+    public static void cacheBeanName(TypeName typeName, String beanName, boolean isSuper) {
         Set<String> m;
         if (beans.containsKey(typeName)) {
             m = beans.get(typeName);
             if (m.contains(beanName)) {
+                if (isSuper) return;
+
                 JabuProcessorUtil.fail("Bean " + typeName + " already exists!");
             }
         } else {
