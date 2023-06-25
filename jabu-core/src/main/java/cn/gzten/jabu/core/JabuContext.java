@@ -4,6 +4,7 @@ import cn.gzten.jabu.util.JabuUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.eclipse.jetty.io.ByteBufferInputStream;
+import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
@@ -27,6 +28,8 @@ public class JabuContext {
     private Response response;
     @Getter
     private Callback callback;
+
+    private ByteBuffer requestByteBuffer = null;
 
     @Setter
     private int downloadBufferSize = 4096;
@@ -64,7 +67,20 @@ public class JabuContext {
     }
 
     public ByteBufferInputStream getRequestBodyAsStream() {
-        return new ByteBufferInputStream(request.read().getByteBuffer());
+        if (requestByteBuffer == null) {
+            var chunk = request.read();
+            if (chunk == null) return new ByteBufferInputStream(ByteBuffer.wrap(new byte[0]));
+            requestByteBuffer = chunk.getByteBuffer();
+        }
+        if (requestByteBuffer == null) return new ByteBufferInputStream(ByteBuffer.wrap(new byte[0]));
+
+        return new ByteBufferInputStream(requestByteBuffer);
+    }
+
+    public void rewindRequestByteBuffer() {
+        if(requestByteBuffer != null) {
+            requestByteBuffer.rewind();
+        }
     }
 
     public SocketAddress getRemoteIp() {

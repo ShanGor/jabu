@@ -1,8 +1,10 @@
 package cn.gzten.jabu.util;
 
 import cn.gzten.jabu.annotation.PathVar;
+import cn.gzten.jabu.annotation.Qualifier;
 import cn.gzten.jabu.annotation.QueryParam;
 import cn.gzten.jabu.annotation.RequestBody;
+import cn.gzten.jabu.annotation.processor.BeanProcessor;
 import cn.gzten.jabu.exception.JabuRequestError;
 import cn.gzten.jabu.core.JabuContext;
 import com.google.gson.reflect.TypeToken;
@@ -108,6 +110,8 @@ public class JabuProcessorUtil {
         codes.add(CodeBlock.of("""
                   ctx.returnWith(400, "Request body parsing error: %s".formatted(e.getMessage()));
                 """));
+        codes.add(CodeBlock.of("} finally {\n"));
+        codes.add(CodeBlock.of("  ctx.rewindRequestByteBuffer();\n"));
         codes.add(CodeBlock.of("}\n"));
     }
 
@@ -178,6 +182,27 @@ public class JabuProcessorUtil {
                 continue;
             }
 
+            // try to locate a bean for it.
+            var qualifier = p.getAnnotation(Qualifier.class);
+            String beanName;
+            if (qualifier != null) {
+
+                if (StringUtil.isNotBlank(qualifier.value())) {
+                    beanName = qualifier.value();
+                } else {
+                    beanName = p.getSimpleName().toString();
+                }
+
+            } else {
+                var opt = BeanProcessor.getDefaultBeanName(TypeName.get(p.asType()));
+                if (opt.isEmpty()) {
+                    fail("Not found bean to fill: " + p.getSimpleName());
+                }
+                beanName = opt.get();
+            }
+
+            result.paramNames.add("_" + paramName);
+            result.codes.add(CodeBlock.of("var _$N = $N;\n", paramName, beanName));
         }
 
         return result;

@@ -61,6 +61,11 @@ public class MainController {
         return testService.getWorld();
     }
 
+    @Route(path = "/test-inject-1")
+    public SimpleBeans.BeanA testInject1(SimpleBeans.BeanA a) {
+        return a;
+    }
+
     @Data
     public static class Hey {
         private String hey;

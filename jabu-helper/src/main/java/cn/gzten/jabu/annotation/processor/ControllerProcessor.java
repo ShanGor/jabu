@@ -17,11 +17,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ControllerProcessor {
-    public static boolean process(RoundEnvironment roundEnv,
-                                  TypeSpec.Builder classSpecBuilder,
-                                  MethodSpec.Builder initMethodBuilder,
-                                  MethodSpec.Builder getBeanMethodBuilder,
-                                  MethodSpec.Builder tryProcessRouteMethodBuilder) {
+    public static boolean process(RoundEnvironment roundEnv, MethodSpec.Builder tryProcessRouteMethodBuilder) {
         var elements = roundEnv.getElementsAnnotatedWith(Controller.class);
         if (elements.isEmpty()) return false;
 
@@ -36,7 +32,7 @@ public class ControllerProcessor {
             var basePath = controllerAnnotation.basePath();
 
             String classFullName = e.toString();
-            System.out.println("Pre-processing: " + classFullName);
+            System.out.println("Pre-processing controller: " + classFullName);
 
             var classInfo = SimClassInfo.from(classFullName, e);
 
@@ -46,11 +42,6 @@ public class ControllerProcessor {
             } else {
                 nameRef.set(classInfo.getClassNameCamelCase());
             }
-
-            // Process Bean Basics and Pre-process Injections
-            BeanProcessor.cacheBeanName(classInfo.getTypeName(), nameRef.get());
-            BeanProcessor.addFillBeanCodeBlock(classInfo, nameRef.get(), classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
-            BeanProcessor.fillPendingInjectionFields(e, nameRef.get());
 
             for (Element el : e.getEnclosedElements()){
                 if (el instanceof ExecutableElement) {
@@ -117,7 +108,6 @@ public class ControllerProcessor {
                             methodParamParseResult.codes.forEach(codeBlock -> tryProcessRouteMethodBuilder.addCode(blankPrefix)
                                     .addCode(codeBlock));
                             var returnType = ClassName.get(method.getReturnType());
-                            System.out.println("Found return type: " + returnType.toString());
                             if (returnType.equals(TypeName.VOID)) {
                                 tryProcessRouteMethodBuilder.addCode(blankPrefix)
                                         .addStatement("ctx.withStatus(200)");

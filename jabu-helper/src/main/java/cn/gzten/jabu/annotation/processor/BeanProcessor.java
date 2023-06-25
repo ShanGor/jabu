@@ -3,6 +3,8 @@ package cn.gzten.jabu.annotation.processor;
 import cn.gzten.jabu.annotation.Bean;
 import cn.gzten.jabu.annotation.HasBean;
 import cn.gzten.jabu.annotation.Inject;
+import cn.gzten.jabu.annotation.Qualifier;
+import cn.gzten.jabu.pojo.PendingInjectMethodWithDependency;
 import cn.gzten.jabu.pojo.PendingInjectionField;
 import cn.gzten.jabu.pojo.SimClassInfo;
 import cn.gzten.jabu.util.JabuProcessorUtil;
@@ -19,10 +21,13 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class BeanProcessor {
-    private static List<PendingInjectionField> pendingInjectionFields = new LinkedList<>();
-    private static Map<TypeName, Set<String>> beans = new ConcurrentHashMap<>();
+    private static final List<PendingInjectionField> pendingInjectionFields = new LinkedList<>();
+    private static final Map<TypeName, Set<String>> beans = new ConcurrentHashMap<>();
+
+    private static final List<PendingInjectMethodWithDependency> pendingInjectMethodWithDependencies = new LinkedList<>();
 
     public static <T  extends Annotation> void process(RoundEnvironment roundEnv,
                                                        TypeSpec.Builder classSpecBuilder,
@@ -46,8 +51,20 @@ public class BeanProcessor {
                                                             TypeSpec.Builder classSpecBuilder,
                                                             MethodSpec.Builder initMethodBuilder,
                                                             MethodSpec.Builder getBeanMethodBuilder) {
+        if (HasBean.class.equals(annotationType)) {
+            for (Element el : element.getEnclosedElements()){
+                if (!(el instanceof ExecutableElement)) continue;
+
+                var beanMethodAnnotation = el.getAnnotation(Bean.class);
+                if (beanMethodAnnotation == null) continue;
+
+                preprocessMethodBean(element, (ExecutableElement)el, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
+            }
+            return;
+        }
+
         String classFullName = element.toString();
-        System.out.println("Pre-processing: " + classFullName);
+        System.out.println("Pre-processing bean: " + classFullName);
         element.getInterfaces().forEach(m -> {
             System.out.println("\t interfaces " + m.toString());
         });
@@ -82,19 +99,6 @@ public class BeanProcessor {
             addFillBeanCodeBlock(classInfo, nameRef.get(), classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
 
             fillPendingInjectionFields(element, nameRef.get());
-
-            return;
-        }
-
-        if (HasBean.class.equals(annotationType)) {
-            for (Element el : element.getEnclosedElements()){
-                if (!(el instanceof ExecutableElement)) continue;
-
-                var beanMethodAnnotation = el.getAnnotation(Bean.class);
-                if (beanMethodAnnotation == null) continue;
-
-                preprocessMethodBean(element, (ExecutableElement)el, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
-            }
         }
     }
 
@@ -115,8 +119,10 @@ public class BeanProcessor {
         if (StringUtil.isNotBlank(beanAnnotation.name())) {
             nameRef.set(beanAnnotation.name());
         } else {
-            nameRef.set(element.getSimpleName().toString());
+            nameRef.set(SimClassInfo.convertTypeNameToSimpleCamelCase(TypeName.get(returnType)));
         }
+        // Cache all the bean name for future processing.
+        cacheBeanName(TypeName.get(returnType), nameRef.get());
 
         // Very simple no dependency
         if (params.isEmpty()) {
@@ -124,7 +130,26 @@ public class BeanProcessor {
                     element.getSimpleName().toString(),
                     classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
         } else {
-            //TODO for those parameters, you need to prioritize them for filling dependencies
+            var o = new PendingInjectMethodWithDependency();
+            o.returnType = TypeName.get(returnType);
+            o.belongToClassType = TypeName.get(clazz.asType());
+            o.methodName = element.getSimpleName().toString();
+            o.methodBeanName = nameRef.get();
+            for (var param : params) {
+                var methodParam = new PendingInjectMethodWithDependency.Param();
+                methodParam.paramType = TypeName.get(param.asType());
+                methodParam.paramName = param.getSimpleName().toString();
+                var qualifier = param.getAnnotation(Qualifier.class);
+                if (qualifier != null) {
+                    if (StringUtil.isNotBlank(qualifier.value())) {
+                        methodParam.qualifier = qualifier.value();
+                    } else {
+                        methodParam.qualifier = methodParam.paramName;
+                    }
+                }
+                o.params.add(methodParam);
+            }
+            pendingInjectMethodWithDependencies.add(o);
         }
     }
 
@@ -164,6 +189,7 @@ public class BeanProcessor {
             getBeanMethodBuilder.addCode(CodeBlock.of("if($S.equals(beanName)) return $N;\n", beanName, beanName));
             initMethodBuilder.addStatement("$N = new $T()", beanName, classInfo.getTypeName());
 
+            //TODO: add implemented interfaces and superclass (only one layer, exclude Object)
             initMethodBuilder.addStatement("fillBean($S, $N)", beanName, beanName);
 
             classSpecBuilder.addField(fieldSpec);
@@ -232,6 +258,70 @@ public class BeanProcessor {
                 initMethodBuilder.addStatement(CodeBlock.of("$T.injectBean($N, $S, $N)", JabuUtils.class, pending.objectName, pending.fieldName, injectBeanName));
             }
 
+        }
+    }
+
+    public static void processPendingInjectMethodWithDependencies(TypeSpec.Builder classSpecBuilder,
+                                                                  MethodSpec.Builder initMethodBuilder,
+                                                                  MethodSpec.Builder getBeanMethodBuilder) {
+        if (pendingInjectMethodWithDependencies.isEmpty()) return;
+
+        var sortedList = new LinkedList<PendingInjectMethodWithDependency>();
+        var nameSet = new HashSet<String>();
+        for (var pending : pendingInjectMethodWithDependencies) {
+            nameSet.add(pending.methodBeanName);
+        }
+
+        // Sort the pending list by dependencies
+        while (!pendingInjectMethodWithDependencies.isEmpty()) {
+            for (var pending : pendingInjectMethodWithDependencies) {
+                var hasDependency = false;
+                for (var param : pending.params) {
+                    String paramBeanName;
+                    if (StringUtil.isNotBlank(param.qualifier)) {
+                        paramBeanName = param.qualifier;
+                    } else {
+                        // The `beans` contains all bean names already, including method bean with parameters
+                        var opt = getDefaultBeanName(param.paramType);
+                        if (opt.isEmpty()) JabuProcessorUtil.fail("Not found bean for: " + param.paramType);
+                        paramBeanName = opt.get();
+                    }
+                    // save this name for later processing
+                    param.beanNameAfterSorted = paramBeanName;
+
+                    if (nameSet.contains(paramBeanName)){
+                        hasDependency = true;
+                    }
+                }
+
+                if (!hasDependency) {
+                    sortedList.add(pending);
+                    nameSet.remove(pending.methodBeanName);
+                    pendingInjectMethodWithDependencies.remove(pending);
+                }
+            }
+        }
+
+        System.out.println("Sorted pending method beans: ");
+        sortedList.forEach(pending -> System.out.println("\tpending methods: " + pending.methodBeanName));
+
+        initMethodBuilder.addCode("\n");
+        initMethodBuilder.addComment("Trying to fill method injections with dependencies, totally %d!".formatted(sortedList.size()));
+        for (var pending : sortedList) {
+            try {
+                FieldSpec fieldSpec = FieldSpec.builder(pending.returnType, pending.methodBeanName)
+                        .addModifiers(Modifier.PRIVATE)
+                        .build();
+                getBeanMethodBuilder.addCode(CodeBlock.of("if($S.equals(beanName)) return $N;\n", pending.methodBeanName, pending.methodBeanName));
+
+                initMethodBuilder.addStatement("$N = $T.$N($N)", pending.methodBeanName, pending.belongToClassType,
+                        pending.methodName, pending.params.stream().map(param -> param.beanNameAfterSorted).collect(Collectors.joining(",")));
+                initMethodBuilder.addStatement("fillBean($S, $N)", pending.methodBeanName, pending.methodBeanName);
+
+                classSpecBuilder.addField(fieldSpec);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 

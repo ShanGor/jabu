@@ -64,20 +64,29 @@ public class JabuProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(JabuContext.class, "ctx");
 
-        // Process @Controller cases
-        var processResult = ControllerProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, tryProcessRouteMethodBuilder );
-        if (processResult == false) return false;
 
-        // Process @Bean and @Service cases
+        // Process @Bean, @Service and @Controller as bean cases
         BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Bean.class);
         BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Service.class);
+        BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Controller.class);
+
+        // Pre-process @Bean for method beans.
         BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, HasBean.class);
+
+        // Process method beans
+        BeanProcessor.processPendingInjectMethodWithDependencies(classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
 
         // Process injections
         BeanProcessor.addInjectionStatements(initMethodBuilder);
 
+        // If not found any matched beans, return null.
         getBeanMethodBuilder.addCode(CodeBlock.of("\nreturn null;"));
 
+        // Process @Controller routes
+        var processResult = ControllerProcessor.process(roundEnv, tryProcessRouteMethodBuilder);
+        if (processResult == false) return false;
+
+        // build the class spec.
         var spec = classSpecBuilder
                 .addMethod(initMethodBuilder.build())
                 .addMethod(getBeanMethodBuilder.build())
