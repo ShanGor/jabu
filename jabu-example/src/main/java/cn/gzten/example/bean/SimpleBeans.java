@@ -39,13 +39,13 @@ public class SimpleBeans {
     }
 
     public static class BeanA {
-        String a;
+        public String a;
     }
     public static class BeanB {
-        String b;
+        public String b;
     }
     public static class BeanC {
-        String c;
+        public String c;
     }
 
     @Bean

@@ -191,9 +191,6 @@ public class BeanProcessor {
     public static void preprocessPreDestroy(ExecutableElement element, String beanName) {
         var annotation = element.getAnnotation(PreDestroy.class);
         if (annotation == null) return;
-        if (!element.getParameters().isEmpty()) {
-            JabuProcessorUtil.fail("@PreDestroy methods, does not accept any parameters!");
-        }
         preDestroys.add(Map.entry(element, beanName));
     }
 
@@ -252,12 +249,19 @@ public class BeanProcessor {
     public static void processPreDestroys(MethodSpec.Builder initMethodBuilder) {
         initMethodBuilder.addCode("\n");
         initMethodBuilder.addComment("@PreDestroy hooks");
+
         for (var pre : preDestroys) {
-            var element = pre.getKey();
+            var method = pre.getKey();
             var beanName = pre.getValue();
+
+            List<String> paramList = new LinkedList<>();
+            for (var param : method.getParameters()) {
+                paramList.add(getBeanNameForParam(param, method));
+            }
+
             initMethodBuilder.addStatement(
-                    CodeBlock.of("$T.addShutdownHook($N::$N)", JabuUtils.class,
-                            beanName, element.getSimpleName().toString())
+                    CodeBlock.of("$T.addShutdownHook(() -> $N.$N($N))", JabuUtils.class,
+                            beanName, method.getSimpleName().toString(), String.join(", ", paramList))
             );
         }
 

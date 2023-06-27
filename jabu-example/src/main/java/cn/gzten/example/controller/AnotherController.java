@@ -25,7 +25,7 @@ public class AnotherController {
 
     @PostConstruct
     public void init(SimpleBeans.BeanC a) {
-        System.out.println("Post construct: Haha, I am " + a.toString());
+        System.out.println("Post construct: Haha, I am " + a.c);
     }
 
     @Setter
@@ -61,7 +61,12 @@ public class AnotherController {
     }
 
     @PreDestroy
-    public void preDestroy() {
-        System.out.println("*** Now exiting!");
+    public void preDestroy(SimpleBeans.BeanA a) {
+        System.out.println("*** Now exiting! hello: " + a.a);
+    }
+
+    @PreDestroy
+    public void preDestroyWithoutParam() {
+        System.out.println("*** Exiting..");
     }
 }

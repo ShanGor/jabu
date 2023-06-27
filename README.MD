@@ -9,14 +9,14 @@ Aim to provide a lightweight framework to write web applications.
 - @Inject: for IoC, NOT @Autowired or @Resource.
   - @Inject(qualifier=name) for qualifier at field. 
   - @Qualifier for qualifier at @Bean method(@Qualifier("name") parameter).
-- @Bean: to define a bean for IoC.  
+- @Bean: to define a bean for IoC.
   Only support direct super class and interfaces. Not super-super-class.
 - @Service: to define a service for IoC.
 - @HasBean: to mark a class for defining @Bean at methods. 
 - @PostConstruct. Must be used inside beans. (Bean, Controller, Service)
-  - It must not be static, can use parameters to inject beans.
+  - It must not be static, can use parameters to inject beans if necessary.
 - @PreDestroy. Must be used inside beans.
-  - It must not be static, without parameters
+  - It must not be static, can use parameters to inject beans if necessary.
 - 
 ## Limitations
 - @Bean can be used to mark a class, and a method.  
@@ -26,9 +26,9 @@ Aim to provide a lightweight framework to write web applications.
 
 
 ## TODO
-- To support @Profile
 - To support @ConfigurationProperties and application[-${profile}].properties  
   specify by `jabu.profiles.active`
+- To support @Profile
 - To support Filter
 - Relational DB operation and default CRUD api expose
 
