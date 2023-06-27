@@ -28,6 +28,7 @@ Aim to provide a lightweight framework to write web applications.
 ## TODO
 - To support @ConfigurationProperties and application[-${profile}].properties  
   specify by `jabu.profiles.active`
+- To do `@Prop("key")` to get property from `application.properties`
 - To support @Profile
 - To support Filter
 - Relational DB operation and default CRUD api expose
