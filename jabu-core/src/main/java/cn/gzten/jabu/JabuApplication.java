@@ -3,11 +3,15 @@ package cn.gzten.jabu;
 import cn.gzten.jabu.exception.ExceptionHandleResponse;
 import cn.gzten.jabu.exception.JabuExceptionHandler;
 import cn.gzten.jabu.core.JabuContext;
+import cn.gzten.jabu.util.JabuUtils;
 import cn.gzten.jabu.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+
+import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 
 @Slf4j
@@ -18,7 +22,31 @@ public class JabuApplication {
 
     public JabuApplication(JabuEntry entry) {
         this.jabuEntry = entry;
+
+        var props = new Properties();
+        loadApplicationProperties("application.properties", props);
+
+        var activeProfile = System.getProperty("jabu.profiles.active", null);
+        if (activeProfile != null) {
+            loadApplicationProperties("application-%s.properties".formatted(activeProfile), props);
+        }
+        this.jabuEntry.setProperties(props);
+
         this.jabuEntry.init();
+    }
+
+    private static void loadApplicationProperties(String path, Properties props) {
+        var opt = JabuUtils.getClasspathResource(path);
+        if (opt.isPresent()) {
+            try (var ins = opt.get()) {
+
+                props.load(ins);
+            } catch (IOException e) {
+                log.error("Failed to load properties {}: {}", path, e.getMessage());
+            }
+        } else {
+            log.warn("No {} found!", path);
+        }
     }
 
     public JabuApplication setExceptionHandler(JabuExceptionHandler exceptionHandler) {

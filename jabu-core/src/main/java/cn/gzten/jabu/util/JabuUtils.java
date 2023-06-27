@@ -269,4 +269,13 @@ public class JabuUtils {
     public static final void addShutdownHook(final Runnable runnable) {
         Runtime.getRuntime().addShutdownHook(new Thread(runnable));
     }
+
+    public static final Optional<InputStream> getClasspathResource(String path) {
+        try {
+            return Optional.of(JabuUtils.class.getClassLoader().getResourceAsStream(path));
+        } catch (RuntimeException e) {
+            return Optional.empty();
+        }
+
+    }
 }

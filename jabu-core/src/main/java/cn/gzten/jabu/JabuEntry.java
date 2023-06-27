@@ -1,13 +1,18 @@
 package cn.gzten.jabu;
 
 import cn.gzten.jabu.core.JabuContext;
+import lombok.Setter;
 
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class JabuEntry {
 
     protected Map<String, Object> beans = new ConcurrentHashMap<>();
+
+    @Setter
+    protected Properties properties = null;
 
     abstract public Object getBean(String beanName);
 
