@@ -79,6 +79,12 @@ public class JabuProcessor extends AbstractProcessor {
         // Process injections
         BeanProcessor.addInjectionStatements(initMethodBuilder);
 
+        // Process pre-destroys
+        BeanProcessor.processPreDestroys(initMethodBuilder);
+
+        // Process post-constructs
+        BeanProcessor.processPostConstruct(initMethodBuilder);
+
         // If not found any matched beans, return null.
         getBeanMethodBuilder.addCode(CodeBlock.of("\nreturn null;"));
 

@@ -1,8 +1,7 @@
 package cn.gzten.example.controller;
 
-import cn.gzten.jabu.annotation.Controller;
-import cn.gzten.jabu.annotation.Inject;
-import cn.gzten.jabu.annotation.Route;
+import cn.gzten.example.bean.SimpleBeans;
+import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.core.JabuContext;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
@@ -23,6 +22,11 @@ public class AnotherController {
     @Inject
     @Setter
     HikariDataSource dataSource;
+
+    @PostConstruct
+    public void init(SimpleBeans.BeanC a) {
+        System.out.println("Post construct: Haha, I am " + a.toString());
+    }
 
     @Setter
     private String hello;
@@ -54,5 +58,10 @@ public class AnotherController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        System.out.println("*** Now exiting!");
     }
 }

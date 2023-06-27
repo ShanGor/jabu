@@ -1,9 +1,6 @@
 package cn.gzten.jabu.annotation.processor;
 
-import cn.gzten.jabu.annotation.Bean;
-import cn.gzten.jabu.annotation.HasBean;
-import cn.gzten.jabu.annotation.Inject;
-import cn.gzten.jabu.annotation.Qualifier;
+import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.pojo.PendingInjectMethodWithDependency;
 import cn.gzten.jabu.pojo.PendingInjectionField;
 import cn.gzten.jabu.pojo.SimClassInfo;
@@ -26,6 +23,10 @@ import java.util.stream.Collectors;
 
 public class BeanProcessor {
     private static final List<PendingInjectionField> pendingInjectionFields = new LinkedList<>();
+
+    private static final List<Map.Entry<ExecutableElement, String>> preDestroys = new LinkedList<>();
+
+    private static final List<Map.Entry<ExecutableElement, String>> postConstructs = new LinkedList<>();
     private static final Map<TypeName, Set<String>> beans = new ConcurrentHashMap<>();
 
     private static final List<PendingInjectMethodWithDependency> pendingInjectMethodWithDependencies = new LinkedList<>();
@@ -40,6 +41,7 @@ public class BeanProcessor {
 
         for (var element : elements) {
             T beanAnnotation = element.getAnnotation(annotationType);
+            // When it is a class, process, skip those case that annotated at method level
             if (element instanceof TypeElement) {
                 doBeanBasics(annotationType, beanAnnotation, (TypeElement)element, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
             }
@@ -52,14 +54,15 @@ public class BeanProcessor {
                                                             TypeSpec.Builder classSpecBuilder,
                                                             MethodSpec.Builder initMethodBuilder,
                                                             MethodSpec.Builder getBeanMethodBuilder) {
+        // HasBean is not a bean, so it can be used along with other Bean annotations, like @Bean/@Service/@Controller
         if (HasBean.class.equals(annotationType)) {
             for (Element el : element.getEnclosedElements()){
                 if (!(el instanceof ExecutableElement)) continue;
 
                 var beanMethodAnnotation = el.getAnnotation(Bean.class);
-                if (beanMethodAnnotation == null) continue;
-
-                preprocessMethodBean(element, (ExecutableElement)el, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
+                if (beanMethodAnnotation != null) {
+                    preprocessMethodBean(element, (ExecutableElement) el, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
+                }
             }
             return;
         }
@@ -108,7 +111,10 @@ public class BeanProcessor {
 
             addFillBeanCodeBlock(classInfo, nameRef.get(), classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
 
-            fillPendingInjectionFields(element, nameRef.get());
+            /**
+             * Main loops for fields and methods
+             */
+            mainLoopForFieldsAndMethods(element, nameRef.get());
         }
     }
 
@@ -182,6 +188,22 @@ public class BeanProcessor {
         }
     }
 
+    public static void preprocessPreDestroy(ExecutableElement element, String beanName) {
+        var annotation = element.getAnnotation(PreDestroy.class);
+        if (annotation == null) return;
+        if (!element.getParameters().isEmpty()) {
+            JabuProcessorUtil.fail("@PreDestroy methods, does not accept any parameters!");
+        }
+        preDestroys.add(Map.entry(element, beanName));
+    }
+
+    public static void preprocessPostConstruct(ExecutableElement element, String beanName) {
+        var annotation = element.getAnnotation(PostConstruct.class);
+        if (annotation == null) return;
+
+        postConstructs.add(Map.entry(element, beanName));
+    }
+
     private static void addFillBeanCodeBlockForMethodBeanWithEmptyParams(TypeMirror clazzType,
                                                                          TypeMirror returnType,
                                                                          String beanName,
@@ -227,10 +249,64 @@ public class BeanProcessor {
         }
     }
 
-    public static void fillPendingInjectionFields(Element element, String beanName) {
+    public static void processPreDestroys(MethodSpec.Builder initMethodBuilder) {
+        initMethodBuilder.addCode("\n");
+        initMethodBuilder.addComment("@PreDestroy hooks");
+        for (var pre : preDestroys) {
+            var element = pre.getKey();
+            var beanName = pre.getValue();
+            initMethodBuilder.addStatement(
+                    CodeBlock.of("$T.addShutdownHook($N::$N)", JabuUtils.class,
+                            beanName, element.getSimpleName().toString())
+            );
+        }
+
+    }
+
+    public static void processPostConstruct(MethodSpec.Builder initMethodBuilder) {
+        initMethodBuilder.addCode("\n");
+        initMethodBuilder.addComment("@PostConstruct hooks");
+
+        for (var pre : postConstructs) {
+            var method = pre.getKey();
+            var beanName = pre.getValue();
+            List<String> paramList = new LinkedList<>();
+            for (var param : method.getParameters()) {
+                paramList.add(getBeanNameForParam(param, method));
+            }
+
+            initMethodBuilder.addStatement(
+                    CodeBlock.of("$N.$N($N)", beanName, method.getSimpleName().toString(),
+                            String.join(", ", paramList))
+            );
+        }
+
+    }
+
+    public static String getBeanNameForParam(VariableElement param, ExecutableElement method) {
+        var q = param.getAnnotation(Qualifier.class);
+        String name;
+        if (q != null) {
+            if (StringUtil.isNotBlank(q.value())) {
+                name = q.value().trim();
+            } else {
+                name = param.getSimpleName().toString();
+            }
+        } else {
+            var opt = getDefaultBeanName(TypeName.get(param.asType()));
+            if (opt.isEmpty()) {
+                JabuProcessorUtil.fail("Fail to find bean " + param.asType() + " for " + method);
+            }
+            name = opt.get();
+        }
+        return name;
+    }
+
+    public static void mainLoopForFieldsAndMethods(Element element, String beanName) {
         var fields = new HashMap<String, PendingInjectionField>();
         var setters = new HashSet<String>();
         for (Element el : element.getEnclosedElements()){
+            // Process @Inject fields
             if (el instanceof VariableElement) {
                 var field = (VariableElement)el;
                 try {
@@ -250,6 +326,9 @@ public class BeanProcessor {
             }
 
             if (el instanceof ExecutableElement) {
+                preprocessPreDestroy((ExecutableElement)el, beanName);
+                preprocessPostConstruct((ExecutableElement)el, beanName);
+
                 var methodName = el.getSimpleName().toString();
                 if (methodName.startsWith("set")) {
                     setters.add(methodName);

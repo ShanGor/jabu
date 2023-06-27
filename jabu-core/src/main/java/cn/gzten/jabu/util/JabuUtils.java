@@ -261,4 +261,12 @@ public class JabuUtils {
                         .replace("/*", "/[^/]*"),
                 listOfPathVarNames));
     }
+
+    /**
+     * Shortcut to shutdown hook
+     * @param runnable
+     */
+    public static final void addShutdownHook(final Runnable runnable) {
+        Runtime.getRuntime().addShutdownHook(new Thread(runnable));
+    }
 }
