@@ -237,7 +237,6 @@ public class BeanProcessor {
             getBeanMethodBuilder.addCode(CodeBlock.of("if($S.equals(beanName)) return $N;\n", beanName, beanName));
             initMethodBuilder.addStatement("$N = new $T()", beanName, classInfo.getTypeName());
 
-            //TODO: add implemented interfaces (excluding Serializable) and superclass (only one layer, exclude Object)
             initMethodBuilder.addStatement("fillBean($S, $N)", beanName, beanName);
 
             classSpecBuilder.addField(fieldSpec);
@@ -252,17 +251,12 @@ public class BeanProcessor {
 
         for (var pre : preDestroys) {
             var method = pre.getKey();
+            var methodName = method.getSimpleName().toString();
             var beanName = pre.getValue();
 
-            List<String> paramList = new LinkedList<>();
-            for (var param : method.getParameters()) {
-                paramList.add(getBeanNameForParam(param, method));
-            }
-
-            initMethodBuilder.addStatement(
-                    CodeBlock.of("$T.addShutdownHook(() -> $N.$N($N))", JabuUtils.class,
-                            beanName, method.getSimpleName().toString(), String.join(", ", paramList))
-            );
+            var code = CodeBlock.of("$T.addShutdownHook(() -> $N.$N($N))", JabuUtils.class,
+                    beanName, methodName, getBeansAsParameters(method));
+            initMethodBuilder.addStatement(code);
         }
 
     }
@@ -273,18 +267,21 @@ public class BeanProcessor {
 
         for (var pre : postConstructs) {
             var method = pre.getKey();
+            var methodName = method.getSimpleName().toString();
             var beanName = pre.getValue();
-            List<String> paramList = new LinkedList<>();
-            for (var param : method.getParameters()) {
-                paramList.add(getBeanNameForParam(param, method));
-            }
+            var code = CodeBlock.of("$N.$N($N)", beanName, methodName, getBeansAsParameters(method));
 
-            initMethodBuilder.addStatement(
-                    CodeBlock.of("$N.$N($N)", beanName, method.getSimpleName().toString(),
-                            String.join(", ", paramList))
-            );
+            initMethodBuilder.addStatement(code);
         }
 
+    }
+
+    public static String getBeansAsParameters(ExecutableElement method) {
+        List<String> paramList = new LinkedList<>();
+        for (var param : method.getParameters()) {
+            paramList.add(getBeanNameForParam(param, method));
+        }
+        return String.join(", ", paramList);
     }
 
     public static String getBeanNameForParam(VariableElement param, ExecutableElement method) {
