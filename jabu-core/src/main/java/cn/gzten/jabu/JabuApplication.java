@@ -71,7 +71,7 @@ public class JabuApplication {
 
         // Create a ServerConnector to accept connections from clients.
         var connector = new ServerConnector(server, 10, 5, new HttpConnectionFactory());
-        connector.setPort((int)jabuEntry.properties.get("server.port"));
+        connector.setPort(JabuUtils.getProperties(jabuEntry.properties, "server.port", Integer.class).get());
         connector.setAcceptQueueSize(10000);
 
         // Add the Connector to the Server

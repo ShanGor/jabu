@@ -278,4 +278,17 @@ public class JabuUtils {
         }
 
     }
+
+    public static final <T extends Object> Optional<T> getProperties(Properties props, String key, Class<T> clazz) {
+        Object o = props.get(key);
+        if (o == null) return Optional.empty();
+
+        if (Integer.class.equals(clazz)) {
+            return Optional.of((T)Integer.valueOf(o.toString()));
+        } else if (Long.class.equals(clazz)){
+            return Optional.of((T)Integer.valueOf(o.toString()));
+        }
+
+        return Optional.of((T)o);
+    }
 }
