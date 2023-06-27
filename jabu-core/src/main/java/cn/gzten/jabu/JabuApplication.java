@@ -24,6 +24,8 @@ public class JabuApplication {
         this.jabuEntry = entry;
 
         var props = new Properties();
+        props.put("server.port", 8080);
+
         loadApplicationProperties("application.properties", props);
 
         var activeProfile = System.getProperty("jabu.profiles.active", null);
@@ -69,7 +71,7 @@ public class JabuApplication {
 
         // Create a ServerConnector to accept connections from clients.
         var connector = new ServerConnector(server, 10, 5, new HttpConnectionFactory());
-        connector.setPort(8080);
+        connector.setPort((int)jabuEntry.properties.get("server.port"));
         connector.setAcceptQueueSize(10000);
 
         // Add the Connector to the Server
