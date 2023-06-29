@@ -10,6 +10,7 @@ import org.eclipse.jetty.util.StringUtil;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -20,14 +21,44 @@ public class JsonPop {
     private LinkedTreeMap<String, Object> props = new LinkedTreeMap<>();
 
     public void load(InputStream ins) {
-        // TODO: Merge sub-object fields, instead of replacing the sub-object
-        var m = gson.fromJson(new InputStreamReader(ins), new TypeToken<LinkedTreeMap<String, Object>>(){});
-        props.putAll(m);
+        var fromMap = gson.fromJson(new InputStreamReader(ins), new TypeToken<LinkedTreeMap<String, Object>>(){});
+
+        copyMap(fromMap, props);
+    }
+
+    public static void copyMap(Map<String, Object> from, Map<String, Object> to) {
+        from.forEach((k, v) -> {
+            if (v == null) {
+                to.put(k, null);
+                return;
+            }
+
+            if (!to.containsKey(k)) {
+                to.put(k, v);
+                return;
+            }
+
+            // the to-map already contains the key
+            if (v instanceof Map ltm) {
+                if (to.get(k) instanceof Map toValue) {
+                    copyMap(ltm, toValue);
+                    return;
+                }
+            }
+
+            // v instanceof List, for list, directly replace it.
+            // v instanceof Double
+            // v instanceof String
+            // v instanceof Long
+            // v instanceof Boolean
+            to.put(k, v);
+
+        });
     }
 
     /**
      * Convenient method to put the path like 'example.book.name'
-     * TODO: add support for list like example.books[0].name
+     * Does NOT support for list like example.books[0].name
      * @param keyPath
      * @param value
      */
@@ -39,7 +70,7 @@ public class JsonPop {
         var end = keys.length;
         var last = end - 1;
 
-        var map = props;
+        Map<String, Object> map = props;
         for (int i=0; i<keys.length; i++) {
             var key = keys[i];
 
@@ -47,7 +78,7 @@ public class JsonPop {
                 map.put(key, value);
             } else {
                 if (map.containsKey(key)) {
-                    map = (LinkedTreeMap<String, Object>) map.get(key);
+                    map = (Map<String, Object>) map.get(key);
                 } else {
                     var m = new LinkedTreeMap<String, Object>();
                     map.put(key, m);
@@ -69,7 +100,9 @@ public class JsonPop {
         assert keyPath!=null;
         var keys = keyPath.split("\\.");
 
-        Function<Object, T> convertScala = (o) -> {
+        Function<Object, T> convertScalar = (o) -> {
+            if (o == null) return null;
+
             if (o.getClass().equals(clazz)) {
                 return (T)o;
             } else if (o instanceof String s) {
@@ -77,6 +110,8 @@ public class JsonPop {
                     return (T)Integer.valueOf(s);
                 } else if (Long.class.equals(clazz)){
                     return (T)Long.valueOf(s);
+                } else if (Boolean.class.equals(clazz)){
+                    return (T)Boolean.valueOf(s);
                 }
             } else if (o instanceof Long num) {
                 if (Integer.class.equals(clazz)) {
@@ -90,12 +125,20 @@ public class JsonPop {
                 } else if (Double.class.equals(clazz)){
                     return (T)num;
                 }
+            } else if (o instanceof Boolean num) {
+                if (String.class.equals(clazz)) {
+                    return (T)num.toString();
+                } else if (Boolean.class.equals(clazz)){
+                    return (T)num;
+                }
+            } else if (o instanceof List || o instanceof Map) {
+                return JsonUtil.toObject(JsonUtil.toJson(o), clazz);
             }
 
             return (T)o;
         };
 
-        var map = props;
+        Map<String, Object> map = props;
         var end = keys.length;
         var last = end - 1;
         for (int i=0; i < end; i++) {
@@ -113,25 +156,29 @@ public class JsonPop {
             if (i == last) {
                 if (idx != null) {
                     if (o instanceof List list) {
-                        return convertScala.apply(list.get(idx));
+                        return convertScalar.apply(list.get(idx));
                     } else {
                         return null;
                     }
                 }
-                return convertScala.apply(o);
+                return convertScalar.apply(o);
             } else {
                 if (idx != null) {
                     if (o instanceof List list) {
-                        map = (LinkedTreeMap<String, Object>)(list.get(idx));
+                        map = (Map<String, Object>)(list.get(idx));
                     } else {
                         return null;
                     }
                 } else {
-                    map = (LinkedTreeMap<String, Object>) o;
+                    map = (Map<String, Object>) o;
                 }
             }
         }
 
         return null;
+    }
+
+    public <T> T toConfig(String prefix, Class<T> clazz) {
+        return getProperties(prefix, clazz);
     }
 }

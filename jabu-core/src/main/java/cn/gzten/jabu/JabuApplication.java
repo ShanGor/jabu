@@ -41,7 +41,6 @@ public class JabuApplication {
         var opt = JabuUtils.getClasspathResource(path);
         if (opt.isPresent()) {
             try (var ins = opt.get()) {
-
                 props.load(ins);
             } catch (IOException e) {
                 log.error("Failed to load properties {}: {}", path, e.getMessage());

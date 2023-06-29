@@ -1,18 +1,11 @@
 package cn.gzten.jabu.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.ToNumberPolicy;
-import com.google.gson.internal.LinkedTreeMap;
-import com.google.gson.reflect.TypeToken;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -149,6 +142,12 @@ public class JabuUtilsTests {
 
         pop.put("server.port", 8080);
         assertEquals(8080, pop.getProperties("server.port", Integer.class));
+
+        var example = pop.toConfig("example", Example.class);
+
+        assertEquals(25, example.id);
+        assertEquals("Samuel", example.name);
+        assertEquals(2, example.books.size());
     }
 
     @Test
@@ -167,8 +166,37 @@ public class JabuUtilsTests {
 
         m.putAll(m1);
 
+        assertEquals("""
+            {"book":{"name":"Cool book"},"name":"Emerson"}""", JsonUtil.toJson(m));
+
+        m = new HashMap<String, Object >();
+        m1 = new HashMap<String, Object>();
+
+
+        m.put("name", "Samuel");
+        var book = new HashMap<String, Object>();
+        book.put("name", "Bye");
+        book.put("id", "my id");
+        m.put("book", book);
+
+        m1.put("name", "Emerson");
+        m1.put("book", Map.of("name", "Cool book"));
+
+        JsonPop.copyMap(m1, m);
         System.out.println(JsonUtil.toJson(m));
+        assertEquals("""
+                {"book":{"name":"Cool book","id":"my id"},"name":"Emerson"}""", JsonUtil.toJson(m));
+    }
 
+    @Data
+    public static class Example {
+        private String name;
+        private int id;
+        private List<Book> books;
 
+        @Data
+        public static class Book {
+            private String name;
+        }
     }
 }

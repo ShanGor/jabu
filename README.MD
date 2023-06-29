@@ -17,7 +17,10 @@ Aim to provide a lightweight framework to write web applications.
   - It must not be static, can use parameters to inject beans if necessary.
 - @PreDestroy. Must be used inside beans.
   - It must not be static, can use parameters to inject beans if necessary.
-- 
+
+## Configuration
+With `application.json` and `application-{profile}.json`, then you can define the @ConfigurationProperties, to use prefix to load to your config object.
+
 ## Limitations
 - @Bean can be used to mark a class, and a method.  
   But when it is used to mark a method, the method needs to be `static`.  
