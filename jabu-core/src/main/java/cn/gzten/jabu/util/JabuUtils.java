@@ -3,6 +3,7 @@ package cn.gzten.jabu.util;
 import cn.gzten.jabu.exception.JabuStartUpError;
 import cn.gzten.jabu.core.JabuContext;
 import cn.gzten.jabu.pojo.RequestMethod;
+import com.google.gson.internal.LinkedTreeMap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
 
@@ -12,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.util.*;
 
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -277,18 +279,5 @@ public class JabuUtils {
             return Optional.empty();
         }
 
-    }
-
-    public static final <T extends Object> Optional<T> getProperties(Properties props, String key, Class<T> clazz) {
-        Object o = props.get(key);
-        if (o == null) return Optional.empty();
-
-        if (Integer.class.equals(clazz)) {
-            return Optional.of((T)Integer.valueOf(o.toString()));
-        } else if (Long.class.equals(clazz)){
-            return Optional.of((T)Integer.valueOf(o.toString()));
-        }
-
-        return Optional.of((T)o);
     }
 }

@@ -1,7 +1,18 @@
 package cn.gzten.jabu.util;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberPolicy;
+import com.google.gson.internal.LinkedTreeMap;
+import com.google.gson.reflect.TypeToken;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -122,5 +133,42 @@ public class JabuUtilsTests {
         res = JabuUtils.getPathVariables(pattern, endpoint);
         assertEquals("2023", res.get().get("year"));
         assertEquals("12", res.get().get("month"));
+    }
+
+    @Test
+    public void testProperties() {
+        var ins = ClassLoader.getSystemClassLoader().getResourceAsStream("application.json");
+        JsonPop pop = new JsonPop();
+        pop.load(ins);
+
+        assertEquals("Samuel", pop.getProperties("example.name", String.class));
+
+        Integer id = pop.getProperties("example.id", Integer.class);
+        assertEquals(25, id);
+        System.out.println(pop.getProperties( "example.books[0].name", String.class));
+
+        pop.put("server.port", 8080);
+        assertEquals(8080, pop.getProperties("server.port", Integer.class));
+    }
+
+    @Test
+    public void testMap() {
+        var m = new HashMap<String, Object >();
+        var m1 = new HashMap<String, Object>();
+        m1.put("name", "Emerson");
+
+        m.put("name", "Samuel");
+        m.putAll(m1);
+
+        assertEquals("Emerson", m.get("name"));
+
+        m.put("book", Map.of("name", "Bye", "id", "my id"));
+        m1.put("book", Map.of("name", "Cool book"));
+
+        m.putAll(m1);
+
+        System.out.println(JsonUtil.toJson(m));
+
+
     }
 }

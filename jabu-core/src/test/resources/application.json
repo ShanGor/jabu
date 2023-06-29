@@ -1,0 +1,10 @@
+{
+  "example": {
+    "name": "Samuel",
+    "id": 25,
+    "books": [
+      {"name": "Bye Bye Birdie"},
+      {"name": "The Game of Thrones"}
+    ]
+  }
+}

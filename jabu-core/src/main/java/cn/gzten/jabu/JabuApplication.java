@@ -4,6 +4,7 @@ import cn.gzten.jabu.exception.ExceptionHandleResponse;
 import cn.gzten.jabu.exception.JabuExceptionHandler;
 import cn.gzten.jabu.core.JabuContext;
 import cn.gzten.jabu.util.JabuUtils;
+import cn.gzten.jabu.util.JsonPop;
 import cn.gzten.jabu.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.*;
@@ -11,7 +12,6 @@ import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import java.io.IOException;
-import java.util.Properties;
 import java.util.concurrent.Executors;
 
 @Slf4j
@@ -23,7 +23,7 @@ public class JabuApplication {
     public JabuApplication(JabuEntry entry) {
         this.jabuEntry = entry;
 
-        var props = new Properties();
+        var props = new JsonPop();
         props.put("server.port", 8080);
 
         loadApplicationProperties("application.properties", props);
@@ -37,7 +37,7 @@ public class JabuApplication {
         this.jabuEntry.init();
     }
 
-    private static void loadApplicationProperties(String path, Properties props) {
+    private static void loadApplicationProperties(String path, JsonPop props) {
         var opt = JabuUtils.getClasspathResource(path);
         if (opt.isPresent()) {
             try (var ins = opt.get()) {
@@ -71,7 +71,7 @@ public class JabuApplication {
 
         // Create a ServerConnector to accept connections from clients.
         var connector = new ServerConnector(server, 10, 5, new HttpConnectionFactory());
-        connector.setPort(JabuUtils.getProperties(jabuEntry.properties, "server.port", Integer.class).get());
+        connector.setPort(jabuEntry.properties.getProperties("server.port", Integer.class));
         connector.setAcceptQueueSize(10000);
 
         // Add the Connector to the Server

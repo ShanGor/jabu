@@ -1,6 +1,7 @@
 package cn.gzten.jabu;
 
 import cn.gzten.jabu.core.JabuContext;
+import cn.gzten.jabu.util.JsonPop;
 import lombok.Setter;
 
 import java.util.Map;
@@ -12,7 +13,7 @@ public abstract class JabuEntry {
     protected Map<String, Object> beans = new ConcurrentHashMap<>();
 
     @Setter
-    protected Properties properties = null;
+    protected JsonPop properties = null;
 
     abstract public Object getBean(String beanName);
 
