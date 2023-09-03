@@ -64,6 +64,8 @@ public class JabuProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(JabuContext.class, "ctx");
 
+        // Process @ConfigurationProperties
+        ConfigurationPropertiesProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);
 
         // Process @Bean, @Service and @Controller as bean cases
         BeanProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder, Bean.class);

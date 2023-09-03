@@ -1,11 +1,13 @@
 package cn.gzten.example.controller;
 
 import cn.gzten.example.bean.SimpleBeans;
+import cn.gzten.example.config.ExampleConfig;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.core.JabuContext;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,7 +19,12 @@ import java.nio.file.StandardOpenOption;
  */
 @Controller(basePath = "/api")
 @Data
+@Slf4j
 public class AnotherController {
+
+    @Inject
+    @Setter
+    ExampleConfig exampleConfig;
 
     @Inject
     @Setter
@@ -59,10 +66,14 @@ public class AnotherController {
             throw new RuntimeException(e);
         }
     }
+    @Route(path = "/example-config")
+    public ExampleConfig testExampleConfig() {
+        return exampleConfig;
+    }
 
     @PreDestroy
     public void preDestroy(SimpleBeans.BeanA a) {
-        System.out.println("*** Now exiting! hello: " + a.a);
+        log.info("*** Now exiting! hello: " + a.a);
     }
 
     @PreDestroy

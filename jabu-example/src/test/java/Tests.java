@@ -1,3 +1,5 @@
+import cn.gzten.example.config.ExampleConfig;
+import cn.gzten.jabu.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -139,4 +141,15 @@ public class Tests {
 
     }
 
+    @Test
+    public void testExampleConfig() throws IOException, InterruptedException {
+        var endpoint = "/api/example-config";
+        var resp = httpClient.send(HttpRequest.newBuilder()
+                .GET().uri(URI.create(baseUri + endpoint))
+                .build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, resp.statusCode());
+        var config = JsonUtil.toObject(resp.body(), ExampleConfig.class);
+        assertEquals("are you okay", config.getHello());
+        assertEquals(404, config.getWorld());
+    }
 }

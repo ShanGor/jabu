@@ -169,8 +169,8 @@ public class JabuUtilsTests {
         assertEquals("""
             {"book":{"name":"Cool book"},"name":"Emerson"}""", JsonUtil.toJson(m));
 
-        m = new HashMap<String, Object >();
-        m1 = new HashMap<String, Object>();
+        m = new HashMap<>();
+        m1 = new HashMap<>();
 
 
         m.put("name", "Samuel");
