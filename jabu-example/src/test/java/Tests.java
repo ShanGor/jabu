@@ -74,7 +74,16 @@ public class Tests {
                 .GET().uri(URI.create(baseUri + endpoint))
                 .build(), HttpResponse.BodyHandlers.ofString());
         assertEquals(200, resp.statusCode());
-        assertEquals("128", resp.body());
+        assertEquals("404", resp.body());
+    }
+    @Test
+    public void testProp() throws IOException, InterruptedException {
+        var endpoint = "/test-prop";
+        var resp = httpClient.send(HttpRequest.newBuilder()
+                .GET().uri(URI.create(baseUri + endpoint))
+                .build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, resp.statusCode());
+        assertEquals("are you okay", resp.body());
     }
     @Test
     public void testBool() throws IOException, InterruptedException {

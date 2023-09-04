@@ -1,6 +1,10 @@
 {
   "example": {
     "hello": "are you okay",
-    "world": 404
+    "world": 404,
+    "belovedBooks": [
+      "bye bye birdie",
+      "unbearable lightness of being"
+    ]
   }
 }

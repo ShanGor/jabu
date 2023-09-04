@@ -16,6 +16,22 @@ public class MainController {
     @Setter
     TestService testService;
 
+    @Prop("example.hello")
+    @Setter
+    String hello;
+
+    @Prop("example.world")
+    int helloWorld;
+
+    @Prop("example.belovedBooks")
+    String[] belovedBooks;
+
+    /**
+     * Please do not use List<String> but only List here, otherwise will cause compilation failure.
+     */
+    @Prop("example.belovedBooks")
+    List listOfBelovedBooks;
+
     @Route(path = "/hello", method = RequestMethod.GET)
     public String hello(@QueryParam("name") String nameForHello) {
         return "Hello, %s".formatted(nameForHello);
@@ -33,7 +49,7 @@ public class MainController {
 
     @Route(path = "/test-int", method = RequestMethod.GET)
     public int testInt() {
-        return 128;
+        return helloWorld;
     }
 
     @Route(path = "/test-integer", method = RequestMethod.GET)
@@ -51,6 +67,15 @@ public class MainController {
         return true;
     }
 
+    @Route(path = "/test-beloved-books", method = RequestMethod.GET)
+    public String[] getBelovedBooks() {
+        return belovedBooks;
+    }
+    @Route(path = "/test-list-beloved-books", method = RequestMethod.GET)
+    public List<String> getListOfBelovedBooks() {
+        return listOfBelovedBooks;
+    }
+
     @Route(path = "/test", method = RequestMethod.POST)
     public String postHey(@RequestBody List<Hey> hey) {
         return "Greeting from %s".formatted(hey.get(0).hey);
@@ -59,6 +84,11 @@ public class MainController {
     @Route(path = "/test-inject")
     public SimpleBeans.World testInject() {
         return testService.getWorld();
+    }
+
+    @Route(path = "/test-prop")
+    public String testProp() {
+        return hello;
     }
 
     @Route(path = "/test-inject-1")

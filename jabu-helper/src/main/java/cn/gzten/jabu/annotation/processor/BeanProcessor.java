@@ -3,6 +3,7 @@ package cn.gzten.jabu.annotation.processor;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.pojo.PendingInjectMethodWithDependency;
 import cn.gzten.jabu.pojo.PendingInjectionField;
+import cn.gzten.jabu.pojo.PendingPropField;
 import cn.gzten.jabu.pojo.SimClassInfo;
 import cn.gzten.jabu.util.JabuProcessorUtil;
 import cn.gzten.jabu.util.JabuUtils;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 public class BeanProcessor {
     private static final List<PendingInjectionField> pendingInjectionFields = new LinkedList<>();
+    private static final List<PendingPropField> pendingPropFields = new LinkedList<>();
 
     private static final List<Map.Entry<ExecutableElement, String>> preDestroys = new LinkedList<>();
 
@@ -304,22 +306,34 @@ public class BeanProcessor {
     }
 
     public static void mainLoopForFieldsAndMethods(Element element, String beanName) {
-        var fields = new HashMap<String, PendingInjectionField>();
+        var injectFields = new HashMap<String, PendingInjectionField>();
+        var propFields = new HashMap<String, PendingPropField>();
         var setters = new HashSet<String>();
         for (Element el : element.getEnclosedElements()){
             // Process @Inject fields
             if (el instanceof VariableElement) {
                 var field = (VariableElement)el;
                 try {
+                    // For those @Inject fields
                     var injection = field.getAnnotation(Inject.class);
-                    if (injection == null) continue;
-
-                    var pendingInjection = new PendingInjectionField();
-                    pendingInjection.qualifier = injection.qualifier();
-                    pendingInjection.fieldName = field.getSimpleName().toString();
-                    pendingInjection.fieldType = TypeName.get(field.asType());
-                    pendingInjection.objectName = beanName;
-                    fields.put(pendingInjection.fieldName, pendingInjection);
+                    if (injection != null) {
+                        var pendingInjection = new PendingInjectionField();
+                        pendingInjection.qualifier = injection.qualifier();
+                        pendingInjection.fieldName = field.getSimpleName().toString();
+                        pendingInjection.fieldType = TypeName.get(field.asType());
+                        pendingInjection.objectName = beanName;
+                        injectFields.put(pendingInjection.fieldName, pendingInjection);
+                    }
+                    // For those @Prop fields
+                    var prop = field.getAnnotation(Prop.class);
+                    if (prop != null) {
+                        var pending = new PendingPropField();
+                        pending.propPath = prop.value();
+                        pending.fieldName = field.getSimpleName().toString();
+                        pending.fieldType = TypeName.get(field.asType());
+                        pending.objectName = beanName;
+                        propFields.put(pending.fieldName, pending);
+                    }
                 } catch (RuntimeException ex) {
                     ex.printStackTrace();
                     throw ex;
@@ -337,15 +351,24 @@ public class BeanProcessor {
             }
         }
 
-        fields.forEach((k, v) -> {
+        // For those @Inject fields
+        injectFields.forEach((k, v) -> {
             if (setters.contains(v.setter())) {
                 v.hasSetter = true;
             }
 
             pendingInjectionFields.add(v);
         });
-    }
 
+        // For those @Prop fields
+        propFields.forEach((k, v) -> {
+            if (setters.contains(v.setter())) {
+                v.hasSetter = true;
+            }
+
+            pendingPropFields.add(v);
+        });
+    }
     public static void addInjectionStatements(MethodSpec.Builder initMethodBuilder) {
         initMethodBuilder.addCode(CodeBlock.of("\n"));
         initMethodBuilder.addComment("Trying to fill injections, totally %d injections found!".formatted(pendingInjectionFields.size()));
@@ -365,6 +388,31 @@ public class BeanProcessor {
             } else {
                 // With JabuUtils.injectBean(Object obj, String fieldName, Object bean);
                 initMethodBuilder.addStatement(CodeBlock.of("$T.injectBean($N, $S, $N)", JabuUtils.class, pending.objectName, pending.fieldName, injectBeanName));
+            }
+
+        }
+    }
+
+    /**
+     * To inject property values to @Prop annotated fields.
+     * @param initMethodBuilder
+     */
+    public static void addInjectPropStatements(MethodSpec.Builder initMethodBuilder) {
+        initMethodBuilder.addCode(CodeBlock.of("\n"));
+        initMethodBuilder.addComment("Trying to fill @Prop injections, totally %d @Prop found!".formatted(pendingPropFields.size()));
+
+        for (var pending: pendingPropFields) {
+            if (pending.propPath.equals("")) {
+                JabuProcessorUtil.fail("@Prop value is mandatory, cannot be null or blank");
+            }
+
+            if (pending.hasSetter) {
+                initMethodBuilder.addStatement(CodeBlock.of("$N.$N(properties.getProperties($S, $T.class))",
+                        pending.objectName, pending.setter(), pending.propPath, pending.fieldType));
+            } else {
+                // With JabuUtils.injectBean(Object obj, String fieldName, Object bean);
+                initMethodBuilder.addStatement(CodeBlock.of("$T.injectBean($N, $S, properties.getProperties($S, $T.class))",
+                        JabuUtils.class, pending.objectName, pending.fieldName, pending.propPath, pending.fieldType));
             }
 
         }

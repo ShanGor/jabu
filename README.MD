@@ -17,6 +17,8 @@ Aim to provide a lightweight framework to write web applications.
   - It must not be static, can use parameters to inject beans if necessary.
 - @PreDestroy. Must be used inside beans.
   - It must not be static, can use parameters to inject beans if necessary.
+- @ConfigurationProperties and application[-${profile}].json, specify by `jabu.profiles.active`
+- @Prop("key") to get property from `application.json`.
 
 ## Configuration
 With `application.json` and `application-{profile}.json`, then you can define the @ConfigurationProperties, to use prefix to load to your config object.
@@ -29,9 +31,6 @@ With `application.json` and `application-{profile}.json`, then you can define th
 
 
 ## TODO
-- To support @ConfigurationProperties and application[-${profile}].properties  
-  specify by `jabu.profiles.active`
-- To do `@Prop("key")` to get property from `application.properties`.
 - To support @Profile
 - To support Filter
 - Relational DB operation and default CRUD api expose

@@ -26,11 +26,11 @@ public class JabuApplication {
         var props = new JsonPop();
         props.put("server.port", 8080);
 
-        loadApplicationProperties("application.properties", props);
+        loadApplicationProperties("application.json", props);
 
         var activeProfile = System.getProperty("jabu.profiles.active", null);
         if (activeProfile != null) {
-            loadApplicationProperties("application-%s.properties".formatted(activeProfile), props);
+            loadApplicationProperties("application-%s.json".formatted(activeProfile), props);
         }
         this.jabuEntry.setProperties(props);
 
@@ -43,7 +43,7 @@ public class JabuApplication {
             try (var ins = opt.get()) {
                 props.load(ins);
             } catch (IOException e) {
-                log.error("Failed to load properties {}: {}", path, e.getMessage());
+                log.error("Failed to load json properties {}: {}", path, e.getMessage());
             }
         } else {
             log.warn("No {} found!", path);

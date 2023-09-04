@@ -80,6 +80,8 @@ public class JabuProcessor extends AbstractProcessor {
 
         // Process injections
         BeanProcessor.addInjectionStatements(initMethodBuilder);
+        // Process @Prop
+        BeanProcessor.addInjectPropStatements(initMethodBuilder);
 
         // Process pre-destroys
         BeanProcessor.processPreDestroys(initMethodBuilder);
