@@ -2,10 +2,6 @@ package cn.gzten.jabu.util;
 
 import lombok.Data;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -202,42 +198,5 @@ public class JabuUtilsTest {
         public static class Book {
             private String name;
         }
-    }
-
-    /**
-     * write test cases for JabuUtils.convertBasicTypes, to cover all the logic branches.
-     */
-    @Test
-    void testConvertBasicTypes() {
-        assertEquals(1, JabuUtils.convertBasicTypes("1", Integer.class));
-        assertEquals(1, JabuUtils.convertBasicTypes("1", int.class));
-        assertEquals(1L, JabuUtils.convertBasicTypes("1", Long.class));
-        assertEquals(1L, JabuUtils.convertBasicTypes("1", long.class));
-        assertEquals(1.0, JabuUtils.convertBasicTypes("1", Double.class));
-        assertEquals(1.0, JabuUtils.convertBasicTypes("1", double.class));
-        assertEquals(true, JabuUtils.convertBasicTypes("true", Boolean.class));
-        assertEquals(true, JabuUtils.convertBasicTypes("true", boolean.class));
-        assertEquals("hey", JabuUtils.convertBasicTypes("hey", String.class));
-        assertEquals(new BigDecimal("1.23"), JabuUtils.convertBasicTypes("1.23", BigDecimal.class));
-        assertEquals(new BigInteger("123"), JabuUtils.convertBasicTypes("123", BigInteger.class));
-
-        assertEquals(null, JabuUtils.convertBasicTypes(null, String.class));
-        assertEquals(null, JabuUtils.convertBasicTypes(null, Integer.class));
-        assertEquals(null, JabuUtils.convertBasicTypes(null, Long.class));
-        assertEquals(null, JabuUtils.convertBasicTypes(null, Double.class));
-        assertEquals(null, JabuUtils.convertBasicTypes(null, Boolean.class));
-
-        assertEquals("", JabuUtils.convertBasicTypes("", String.class));
-        assertEquals(null, JabuUtils.convertBasicTypes("", Integer.class));
-        assertEquals(null, JabuUtils.convertBasicTypes("", Long.class));
-        assertEquals(null, JabuUtils.convertBasicTypes("", Double.class));
-        assertEquals(null, JabuUtils.convertBasicTypes("", Boolean.class));
-
-        assertEquals("1.0", JabuUtils.convertBasicTypes("1.0", String.class));
-        assertThrows(NumberFormatException.class, () -> JabuUtils.convertBasicTypes("1.0", Integer.class));
-        assertThrows(NumberFormatException.class, () -> JabuUtils.convertBasicTypes("1.0", Long.class));
-        assertEquals(1.0d, JabuUtils.convertBasicTypes("1.0", Double.class));
-
-        assertEquals(1, JabuUtils.convertBasicTypes(1L, int.class));
     }
 }

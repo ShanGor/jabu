@@ -8,8 +8,6 @@ import org.eclipse.jetty.util.StringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.util.*;
@@ -75,7 +73,7 @@ public class JabuUtils {
         try {
             var field = obj.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
-            field.set(obj, convertBasicTypes(bean, field.getType()));
+            field.set(obj, TypeUtils.convertBasicTypes(bean, field.getType()));
 
         } catch (NoSuchFieldException e) {
             throw new JabuStartUpError("Failed at wiring beans: " + e.getMessage());
@@ -280,106 +278,5 @@ public class JabuUtils {
             return Optional.empty();
         }
 
-    }
-
-    /**
-     * Given an object, convert to a target basic type;
-     * @param o
-     * @param target
-     * @return
-     */
-    public static Object convertBasicTypes(Object o, Class target) {
-
-        boolean targetBoolean = target.equals(boolean.class) || target.equals(Boolean.class);
-        if (o instanceof Long) {
-            if (TypeUtils.isLong(target))
-                return o;
-            if (TypeUtils.isInt(target))
-                return ((Long) o).intValue();
-            if (TypeUtils.isShort(target))
-                return ((Long) o).shortValue();
-            if (TypeUtils.isByte(target))
-                return ((Long) o).byteValue();
-            if (target.equals(String.class)) {
-                return o.toString();
-            }
-        } else if (o instanceof Integer) {
-            if (TypeUtils.isLong(target))
-                return ((Integer) o).longValue();
-            if (TypeUtils.isInt(target))
-                return o;
-            if (TypeUtils.isShort(target))
-                return ((Integer) o).shortValue();
-            if (TypeUtils.isByte(target))
-                return ((Integer) o).byteValue();
-            if (target.equals(String.class)) {
-                return o.toString();
-            }
-        } else if (o instanceof Short) {
-            if (TypeUtils.isLong(target))
-                return ((Short) o).longValue();
-            if (TypeUtils.isInt(target))
-                return ((Short) o).intValue();
-            if (TypeUtils.isShort(target))
-                return o;
-            if (TypeUtils.isByte(target))
-                return ((Short) o).byteValue();
-            if (target.equals(String.class)) {
-                return o.toString();
-            }
-        } else if (o instanceof Byte) {
-            if (TypeUtils.isLong(target))
-                return ((Byte) o).longValue();
-            if (TypeUtils.isInt(target))
-                return ((Byte) o).intValue();
-            if (TypeUtils.isShort(target))
-                return ((Byte) o).shortValue();
-            if (TypeUtils.isByte(target))
-                return o;
-            if (target.equals(String.class)) {
-                return o.toString();
-            }
-        } else if (o instanceof Boolean) {
-            if (targetBoolean) {
-                return o;
-            }
-            if (target.equals(String.class)) {
-                return o.toString();
-            }
-        } else if (o instanceof String) {
-            if (target.equals(String.class)) {
-                return o;
-            }
-
-            if (o == null || StringUtil.isBlank((String) o)) return null;
-
-            if (TypeUtils.isLong(target))
-                return Long.parseLong((String) o);
-            if (TypeUtils.isInt(target))
-                return Integer.parseInt((String) o);
-            if (TypeUtils.isShort(target))
-                return Short.parseShort((String) o);
-            if (TypeUtils.isByte(target))
-                return Byte.parseByte((String) o);
-            if (targetBoolean) {
-                return Boolean.parseBoolean((String) o);
-            }
-            if (TypeUtils.isDouble(target)){
-                return Double.parseDouble((String) o);
-            }
-            if (TypeUtils.isFloat(target)){
-                return Double.parseDouble((String) o);
-            }
-            if (target.equals(BigDecimal.class)) {
-                return new BigDecimal((String)o);
-            }
-
-            if (target.equals(BigInteger.class)) {
-                return new BigInteger((String)o);
-            }
-        }
-
-
-        return o;
     }
 }
