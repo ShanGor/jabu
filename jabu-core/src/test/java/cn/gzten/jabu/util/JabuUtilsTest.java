@@ -151,6 +151,16 @@ public class JabuUtilsTest {
     }
 
     @Test
+    public void testCamelCaseToUnderscore() {
+        assertEquals("user_id", JabuUtils.camelCaseToUnderscore("userId"));
+    }
+
+    @Test
+    public void testUnderscoreToCamelCase() {
+        assertEquals("userId", JabuUtils.underscoreToCamelCase("user_id"));
+    }
+
+    @Test
     public void testMap() {
         var m = new HashMap<String, Object >();
         var m1 = new HashMap<String, Object>();

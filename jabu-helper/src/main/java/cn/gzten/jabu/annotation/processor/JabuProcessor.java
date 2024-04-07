@@ -7,14 +7,16 @@ import cn.gzten.jabu.pojo.SimClassInfo;
 import cn.gzten.jabu.util.JabuProcessorUtil;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
+import com.zaxxer.hikari.HikariDataSource;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.*;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_19)
+@SupportedSourceVersion(SourceVersion.RELEASE_21)
 @AutoService(Processor.class)
 public class JabuProcessor extends AbstractProcessor {
     private Filer filer;
@@ -31,6 +33,7 @@ public class JabuProcessor extends AbstractProcessor {
                 Bean.class.getCanonicalName(),
                 HasBean.class.getCanonicalName(),
                 Service.class.getCanonicalName(),
+                Repository.class.getCanonicalName(),
                 Controller.class.getCanonicalName());
     }
 
@@ -97,6 +100,26 @@ public class JabuProcessor extends AbstractProcessor {
         var processResult = ControllerProcessor.process(roundEnv, tryProcessRouteMethodBuilder);
         if (processResult == false) return false;
 
+        // Process @Repository
+        var repos = JabuRepositoryProcessor.process(roundEnv, filer);
+        if (!repos.isEmpty()) {
+            initMethodBuilder.addCode("\n");
+            initMethodBuilder.addComment("Initialize the repositories");
+        }
+        repos.forEach(repo -> {
+            var typeName = TypeName.get(DataSource.class);
+            var name = BeanProcessor.getDefaultBeanName(typeName);
+            if (name.isEmpty()) {
+                typeName = TypeName.get(HikariDataSource.class);
+                name = BeanProcessor.getDefaultBeanName(typeName);
+                if (name.isEmpty()) {
+                    throw new RuntimeException("Please ensure you have dataSource bean defined");
+                }
+            }
+            var repoType = ClassName.get(repo.packageName, repo.className+"Repository");
+            initMethodBuilder.addStatement("$T.setDataSource(($T)this.getBean($S))", repoType, typeName, name.get());
+        });
+
         // build the class spec.
         var spec = classSpecBuilder
                 .addMethod(initMethodBuilder.build())
@@ -110,6 +133,7 @@ public class JabuProcessor extends AbstractProcessor {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+
 
         return true;
     }

@@ -29,7 +29,7 @@ public abstract class JabuEntry {
      */
     public void fillBean(String beanName, Object bean) {
         if (beans.containsKey(beanName)) {
-            var errMsg = STR."Bean \{beanName} already exists!";
+            var errMsg = "Bean %s already exists!".formatted(beanName);
             System.err.println(errMsg);
             throw new RuntimeException(errMsg);
         }

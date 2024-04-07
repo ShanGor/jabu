@@ -279,4 +279,52 @@ public class JabuUtils {
         }
 
     }
+
+    /**
+     * Convert camel case to underscore case
+     * @param camelCaseStr
+     * @return
+     */
+    public static final String camelCaseToUnderscore(String camelCaseStr) {
+        // write logic to accomplish the task
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < camelCaseStr.length(); i++) {
+            char currentChar = camelCaseStr.charAt(i);
+
+            if (Character.isUpperCase(currentChar)) {
+                if (i > 0 && Character.isLowerCase(camelCaseStr.charAt(i - 1))) {
+                    sb.append('_');
+                }
+                sb.append(Character.toLowerCase(currentChar));
+            } else {
+                sb.append(currentChar);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    public static String underscoreToCamelCase(String underscoreStr) {
+        StringBuilder sb = new StringBuilder();
+        boolean capitalizeNext = false;
+
+        for (int i = 0; i < underscoreStr.length(); i++) {
+            char currentChar = underscoreStr.charAt(i);
+
+            if (currentChar == '_') {
+                capitalizeNext = true;
+                continue;
+            }
+
+            if (capitalizeNext) {
+                sb.append(Character.toUpperCase(currentChar));
+                capitalizeNext = false;
+            } else {
+                sb.append(Character.toLowerCase(currentChar));
+            }
+        }
+
+        return sb.toString();
+    }
 }
