@@ -62,7 +62,8 @@ public class JabuProcessor extends AbstractProcessor {
         var tryProcessRouteMethodBuilder = MethodSpec.methodBuilder("tryProcessRoute")
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(JabuContext.class, "ctx");
+                .addParameter(JabuContext.class, "ctx")
+                .returns(boolean.class);
 
         // Process @ConfigurationProperties
         ConfigurationPropertiesProcessor.process(roundEnv, classSpecBuilder, initMethodBuilder, getBeanMethodBuilder);

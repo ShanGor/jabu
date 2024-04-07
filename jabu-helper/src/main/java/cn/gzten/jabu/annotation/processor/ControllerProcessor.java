@@ -74,7 +74,7 @@ public class ControllerProcessor {
                                           """;
 
                                 templateSuffix = """
-                                            return;
+                                            return true;
                                           }
                                         }
                                         """;
@@ -92,7 +92,7 @@ public class ControllerProcessor {
                                             """;
 
                                 templateSuffix = """
-                                              return;
+                                              return true;
                                             }
                                           }
                                         }
@@ -148,7 +148,7 @@ public class ControllerProcessor {
         }
         // Not found route
         tryProcessRouteMethodBuilder.addComment("Not found route");
-        tryProcessRouteMethodBuilder.addStatement(CodeBlock.of("ctx.returnWith(404, $S + requestPath)", "Not found proper route for "));
+        tryProcessRouteMethodBuilder.addStatement(CodeBlock.of("return false"));
 
         return true;
     }

@@ -87,7 +87,10 @@ public class JabuApplication {
                 log.info("Requesting: {}",path);
 
                 try {
-                    jabuEntry.tryProcessRoute(ctx);
+                    var processed = jabuEntry.tryProcessRoute(ctx);
+                    if (!processed) {
+                        ctx.returnWith(404, "Not Found %s".formatted(ctx.getPath()));
+                    }
                 } catch (Exception e) {
                         var resp = exceptionHandler.handle(e);
                         ctx.setContentType(resp.getContentType());

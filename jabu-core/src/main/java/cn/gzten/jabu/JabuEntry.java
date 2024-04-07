@@ -37,5 +37,5 @@ public abstract class JabuEntry {
         beans.put(beanName, bean);
     }
 
-    abstract public void tryProcessRoute(JabuContext ctx);
+    abstract public boolean tryProcessRoute(JabuContext ctx);
 }
