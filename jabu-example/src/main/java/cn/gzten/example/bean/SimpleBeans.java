@@ -5,15 +5,8 @@ import cn.gzten.jabu.annotation.HasBean;
 import cn.gzten.jabu.annotation.Qualifier;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
-import org.eclipse.jetty.http.HttpFields;
-import org.eclipse.jetty.http.HttpURI;
-import org.eclipse.jetty.io.Content;
-import org.eclipse.jetty.server.*;
 
 import java.io.Serializable;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 @HasBean
 public class SimpleBeans {

@@ -5,7 +5,6 @@ import cn.gzten.jabu.util.JsonPop;
 import lombok.Setter;
 
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class JabuEntry {
@@ -30,7 +29,7 @@ public abstract class JabuEntry {
      */
     public void fillBean(String beanName, Object bean) {
         if (beans.containsKey(beanName)) {
-            var errMsg = "Bean " + beanName + " already exists!";
+            var errMsg = STR."Bean \{beanName} already exists!";
             System.err.println(errMsg);
             throw new RuntimeException(errMsg);
         }

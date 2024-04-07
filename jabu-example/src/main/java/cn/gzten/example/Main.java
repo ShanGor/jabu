@@ -6,6 +6,6 @@ import cn.gzten.jabu.annotation.JabuBoot;
 @JabuBoot
 public class Main {
     public static void main(String[] args) throws Exception {
-        new JabuApplication(new JabuEntryImpl()).startServer();
+        new JabuApplication(new cn.gzten.example.JabuEntryImpl()).startServer();
     }
 }
