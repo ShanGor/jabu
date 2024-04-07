@@ -76,7 +76,7 @@ public class TypeUtils {
             return Double.parseDouble(o);
         }
         if (TypeUtils.isFloat(target)){
-            return Double.parseDouble(o);
+            return Float.parseFloat(o);
         }
         if (target.equals(BigDecimal.class)) {
             return new BigDecimal(o);

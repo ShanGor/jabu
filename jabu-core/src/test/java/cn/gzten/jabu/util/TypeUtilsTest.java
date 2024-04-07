@@ -104,11 +104,18 @@ class TypeUtilsTest {
         assertThrows(NumberFormatException.class, () -> TypeUtils.convertBasicTypes("1.0", Integer.class));
         assertThrows(NumberFormatException.class, () -> TypeUtils.convertBasicTypes("1.0", Long.class));
         assertEquals(1.0d, TypeUtils.convertBasicTypes("1.0", Double.class));
-
+        assertEquals(1.0f, TypeUtils.convertBasicTypes("1.0", Float.class));
+        assertEquals(true, TypeUtils.convertBasicTypes("true", Boolean.class));
+        assertEquals(false, TypeUtils.convertBasicTypes("false", Boolean.class));
+        assertEquals("hey", TypeUtils.convertBasicTypes("hey", String.class));
+        assertEquals(new BigDecimal("1.23"), TypeUtils.convertBasicTypes("1.23", BigDecimal.class));
+        assertEquals(new BigInteger("123"), TypeUtils.convertBasicTypes("123", BigInteger.class));
+        assertEquals("123", TypeUtils.convertBasicTypes("123", Object.class));
         assertEquals(1, TypeUtils.convertBasicTypes(1L, int.class));
 
         Long x = 1L;
         System.out.println(x instanceof Number);
+
     }
 
 }
