@@ -1,4 +1,4 @@
-# J-Sim: Java Simple Web Framework
+# Jabu: Java Application Builder
 
 Aim to provide a lightweight framework to write web applications.
 
@@ -13,9 +13,9 @@ Aim to provide a lightweight framework to write web applications.
   Only support direct super class and interfaces. Not super-super-class.
 - @Service: to define a service for IoC.
 - @HasBean: to mark a class for defining @Bean at methods. 
-- @PostConstruct. Must be used inside beans. (Bean, Controller, Service)
+- @PostConstruct. Must be used to a method inside beans. (Bean, Controller, Service)
   - It must not be static, can use parameters to inject beans if necessary.
-- @PreDestroy. Must be used inside beans.
+- @PreDestroy. Must be used to a method inside beans.
   - It must not be static, can use parameters to inject beans if necessary.
 - @ConfigurationProperties and application[-${profile}].json, specify by `jabu.profiles.active`
 - @Prop("key") to get property from `application.json`.
