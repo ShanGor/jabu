@@ -27,8 +27,8 @@ public class ConfigurationPropertiesProcessor {
             getBeanMethodBuilder.addCode(CodeBlock.of("if($S.equals(beanName)) return $N;\n", beanName, beanName));
 
             var prefix = ann.prefix();
-            initMethodBuilder.addStatement("$N = this.properties.toConfig($S, $T.class);", beanName, prefix, element.asType());
-
+            initMethodBuilder.addStatement("$N = this.properties.toConfig($S, $T.class)", beanName, prefix, element.asType());
+            initMethodBuilder.addStatement("fillBean($S, $L)", beanName, beanName);
             BeanProcessor.cacheBeanName(typeName, beanName, false);
         }
 

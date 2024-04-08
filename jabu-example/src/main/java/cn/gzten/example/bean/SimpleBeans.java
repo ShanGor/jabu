@@ -1,11 +1,13 @@
 package cn.gzten.example.bean;
 
+import cn.gzten.example.config.DataSourceConfig;
 import cn.gzten.jabu.annotation.Bean;
 import cn.gzten.jabu.annotation.HasBean;
 import cn.gzten.jabu.annotation.Qualifier;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
 
+import javax.sql.DataSource;
 import java.io.Serializable;
 
 @HasBean
@@ -27,8 +29,12 @@ public class SimpleBeans {
     }
 
     @Bean
-    public static HikariDataSource testDatasourceAsBean() {
-        return new HikariDataSource();
+    public static DataSource testDatasourceAsBean(DataSourceConfig dataSourceConfig) {
+        var ds =  new HikariDataSource();
+        ds.setJdbcUrl(dataSourceConfig.getJdbcUrl());
+        ds.setUsername(dataSourceConfig.getUser());
+        ds.setPassword(dataSourceConfig.getPassword());
+        return ds;
     }
 
     public static class BeanA {

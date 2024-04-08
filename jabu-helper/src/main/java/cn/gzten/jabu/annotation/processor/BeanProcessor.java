@@ -19,19 +19,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class BeanProcessor {
-    private static final List<PendingInjectionField> pendingInjectionFields = new LinkedList<>();
-    private static final List<PendingPropField> pendingPropFields = new LinkedList<>();
+    private static final List<PendingInjectionField> pendingInjectionFields = new CopyOnWriteArrayList<>();
+    private static final List<PendingPropField> pendingPropFields = new CopyOnWriteArrayList<>();
 
-    private static final List<Map.Entry<ExecutableElement, String>> preDestroys = new LinkedList<>();
+    private static final List<Map.Entry<ExecutableElement, String>> preDestroys = new CopyOnWriteArrayList<>();
 
-    private static final List<Map.Entry<ExecutableElement, String>> postConstructs = new LinkedList<>();
+    private static final List<Map.Entry<ExecutableElement, String>> postConstructs = new CopyOnWriteArrayList<>();
     private static final Map<TypeName, Set<String>> beans = new ConcurrentHashMap<>();
 
-    private static final List<PendingInjectMethodWithDependency> pendingInjectMethodWithDependencies = new LinkedList<>();
+    private static final List<PendingInjectMethodWithDependency> pendingInjectMethodWithDependencies = new CopyOnWriteArrayList<>();
 
     public static <T  extends Annotation> void process(RoundEnvironment roundEnv,
                                                        TypeSpec.Builder classSpecBuilder,

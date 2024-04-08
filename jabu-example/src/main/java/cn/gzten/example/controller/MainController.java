@@ -1,6 +1,8 @@
 package cn.gzten.example.controller;
 
 import cn.gzten.example.bean.SimpleBeans;
+import cn.gzten.example.data.MyTable;
+import cn.gzten.example.data.MyTableRepository;
 import cn.gzten.example.service.TestService;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.pojo.RequestMethod;
@@ -31,6 +33,12 @@ public class MainController {
      */
     @Prop("example.belovedBooks")
     List listOfBelovedBooks;
+
+    @Route(path = "/users", method = RequestMethod.GET)
+    public List<MyTable> getUsers() {
+        var li = MyTableRepository.findAll();
+        return li;
+    }
 
     @Route(path = "/hello", method = RequestMethod.GET)
     public String hello(@QueryParam("name") String nameForHello) {

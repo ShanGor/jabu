@@ -3,6 +3,7 @@ package cn.gzten.jabu.annotation.processor;
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.data.CrudRepository;
 import cn.gzten.jabu.pojo.SimClassInfo;
+import cn.gzten.jabu.util.DatabaseUtil;
 import cn.gzten.jabu.util.DateTimeUtils;
 import cn.gzten.jabu.util.JabuProcessorUtil;
 import cn.gzten.jabu.util.JabuUtils;
@@ -20,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JabuRepositoryProcessor {
     public static List<SimClassInfo> process(RoundEnvironment roundEnv, Filer filer) {
@@ -44,7 +46,6 @@ public class JabuRepositoryProcessor {
             var methodFromBuilder = MethodSpec.methodBuilder("from")
                     .addModifiers(Modifier.PUBLIC)
                     .addModifiers(Modifier.STATIC)
-                    .addException(SQLException.class)
                     .addParameter(ResultSet.class, "rs")
                     .returns(classInfo.getTypeName());
             composeFromMethod(methodFromBuilder, classInfo, element);
@@ -52,21 +53,11 @@ public class JabuRepositoryProcessor {
             var methodFindAllBuilder = MethodSpec.methodBuilder("findAll")
                     .addModifiers(Modifier.PUBLIC)
                     .addModifiers(Modifier.STATIC)
-                    .addException(SQLException.class)
                     .returns(ParameterizedTypeName.get(ClassName.get("java.util", "List"), classInfo.getTypeName()));
             var sql = "select * from %s".formatted(tableName);
             methodFindAllBuilder.addStatement("$T sql = $S", String.class, sql);
-            methodFindAllBuilder.addCode(CodeBlock.of("try($T conn=dataSource.getConnection()) {\n", Connection.class));
-            methodFindAllBuilder.addCode(CodeBlock.of("  try(var stmt = conn.prepareStatement(sql)) {\n", ResultSet.class));
-            methodFindAllBuilder.addCode(CodeBlock.of("    try(var rs = stmt.executeQuery()) {\n", ResultSet.class));
-            methodFindAllBuilder.addCode(CodeBlock.of("      var list = new $T<$T>();\n", LinkedList.class, classInfo.getTypeName()));
-            methodFindAllBuilder.addCode(CodeBlock.of("      while(rs.next()) {\n", ResultSet.class));
-            methodFindAllBuilder.addCode(CodeBlock.of("        list.add(from(rs));\n"));
-            methodFindAllBuilder.addCode(CodeBlock.of("      }\n"));
-            methodFindAllBuilder.addCode(CodeBlock.of("    }\n"));
-            methodFindAllBuilder.addCode(CodeBlock.of("  }\n"));
-            methodFindAllBuilder.addCode(CodeBlock.of("}\n"));
-            methodFindAllBuilder.addStatement("return null");
+            var className = ClassName.get(classInfo.packageName, classInfo.className + "Repository");
+            methodFindAllBuilder.addStatement("return $T.query(sql, dataSource, $T::from)", DatabaseUtil.class, className);
 
             var methodForSetDataSource = MethodSpec.methodBuilder("setDataSource")
                     .addModifiers(Modifier.PUBLIC)
@@ -94,6 +85,8 @@ public class JabuRepositoryProcessor {
 
     public static void composeFromMethod(MethodSpec.Builder methodFromBuilder, SimClassInfo classInfo, Element element) {
         methodFromBuilder.addStatement(CodeBlock.of("$T obj = new $T()", classInfo.getTypeName(), classInfo.getTypeName()));
+
+        AtomicBoolean hasMember = new AtomicBoolean(false);
         element.getEnclosedElements().forEach(member -> {
             if (member instanceof VariableElement) {
                 var variableElement = (VariableElement) member;
@@ -101,6 +94,10 @@ public class JabuRepositoryProcessor {
                 var fieldType = variableElement.asType();
                 var setter = JabuUtils.composeSetter(fieldName);
                 var key = JabuUtils.camelCaseToUnderscore(fieldName);
+                if (!hasMember.get()) {
+                    hasMember.set(true);
+                    methodFromBuilder.addCode("try {\n");
+                }
                 if (JabuProcessorUtil.typeMirrorIsType(fieldType, String.class)) {
                     methodFromBuilder.addStatement(CodeBlock.of("obj.$L(rs.getString($S))", setter, key));
                 } else if (JabuProcessorUtil.typeMirrorIsType(fieldType, Integer.class)|| JabuProcessorUtil.typeMirrorIsType(fieldType, int.class)) {
@@ -126,6 +123,11 @@ public class JabuRepositoryProcessor {
                 }
             }
         });
+        if (hasMember.get()) {
+            methodFromBuilder.addCode("} catch($T e) {\n", SQLException.class);
+            methodFromBuilder.addStatement("throw new $T(e)", RuntimeException.class);
+            methodFromBuilder.addCode("}\n");
+        }
         methodFromBuilder.addStatement(CodeBlock.of("return obj"));
     }
 }

@@ -6,5 +6,10 @@
       "bye bye birdie",
       "unbearable lightness of being"
     ]
+  },
+  "dataSource": {
+    "jdbcUrl": "jdbc:postgresql://localhost:5432/sam",
+    "user": "sam",
+    "password": "sam"
   }
 }
