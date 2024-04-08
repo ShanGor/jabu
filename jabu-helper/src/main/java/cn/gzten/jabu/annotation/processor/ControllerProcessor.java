@@ -128,12 +128,9 @@ public class ControllerProcessor {
                                 } else if(returnType.isBoxedPrimitive()) {
                                     tryProcessRouteMethodBuilder.addCode(blankPrefix)
                                             .addStatement("ctx.returnWith(_res.toString())");
-                                } else if (returnType.equals(TypeName.get(String.class))) {
-                                    tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                            .addStatement("ctx.returnWith(_res)");
                                 } else {
                                     tryProcessRouteMethodBuilder.addCode(blankPrefix)
-                                            .addStatement("ctx.returnWith(JsonUtil.toJson(_res))");
+                                            .addStatement("ctx.returnWith(_res)");
                                 }
                             }
 

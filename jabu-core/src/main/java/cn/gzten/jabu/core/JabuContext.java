@@ -1,6 +1,7 @@
 package cn.gzten.jabu.core;
 
 import cn.gzten.jabu.util.JabuUtils;
+import cn.gzten.jabu.util.JsonUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.eclipse.jetty.io.ByteBufferInputStream;
@@ -170,15 +171,31 @@ public class JabuContext {
         }
     }
 
-    public void returnWith(int statusCode, String value) {
+    public void returnWith(int statusCode, Object value) {
         withStatus(statusCode).returnWith(value);
     }
 
-    public void returnWith(String value) {
-        response.write(true, ByteBuffer.wrap(value.getBytes()), callback);
+    public void returnWith(Object value) {
+        if (value == null) {
+            response.write(true, ByteBuffer.wrap("null".getBytes()), callback);
+            return;
+        } else if (value instanceof String) {
+            response.write(true, ByteBuffer.wrap(((String)value).getBytes()), callback);
+            return;
+        } else if (value instanceof byte[]) {
+            response.write(true, ByteBuffer.wrap((byte[])value), callback);
+            return;
+        } else if (value instanceof ByteBuffer) {
+            response.write(true, (ByteBuffer)value, callback);
+            return;
+        }
+        if (!response.getHeaders().contains("Content-Type")) {
+            response.getHeaders().put("Content-Type", "application/json");
+        }
+        response.write(true, ByteBuffer.wrap(JsonUtil.toJson(value).getBytes()), callback);
     }
 
-    public void returnWith(int statusCode, String value, Map<String, String> headers) {
+    public void returnWith(int statusCode, Object value, Map<String, String> headers) {
         if (headers != null) headers.forEach((k, v) -> addHeader(k, v));
         returnWith(statusCode, value);
     }
