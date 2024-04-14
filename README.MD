@@ -18,7 +18,8 @@ Aim to provide a lightweight framework to write web applications.
 - @PreDestroy. Must be used to a method inside beans.
   - It must not be static, can use parameters to inject beans if necessary.
 - @ConfigurationProperties and application[-${profile}].json, specify by `jabu.profiles.active`
-- @Prop("key") to get property from `application.json`.
+- @Prop("key") to get property from `application.json`. It can be used either to inject to fields, or in the @Bean method.
+  But when it is used on method, it can only support primitive types. When you need to use a complex object, you can use @ConfigurationProperties to define a bean, then can be injected as a bean (avoid to create too many instances in memory).
 
 ## Configuration
 With `application.json` and `application-{profile}.json`, then you can define the @ConfigurationProperties, to use prefix to load to your config object.

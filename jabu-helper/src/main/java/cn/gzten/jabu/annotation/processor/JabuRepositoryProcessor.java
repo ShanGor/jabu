@@ -2,6 +2,7 @@ package cn.gzten.jabu.annotation.processor;
 
 import cn.gzten.jabu.annotation.*;
 import cn.gzten.jabu.data.CrudRepository;
+import cn.gzten.jabu.exception.JabuException;
 import cn.gzten.jabu.pojo.SimClassInfo;
 import cn.gzten.jabu.util.DatabaseUtil;
 import cn.gzten.jabu.util.DateTimeUtils;
@@ -124,7 +125,7 @@ public class JabuRepositoryProcessor {
         });
         if (hasMember.get()) {
             methodFromBuilder.addCode("} catch($T e) {\n", SQLException.class);
-            methodFromBuilder.addStatement("throw new $T(e)", RuntimeException.class);
+            methodFromBuilder.addStatement("throw new $T(e)", JabuException.class);
             methodFromBuilder.addCode("}\n");
         }
         methodFromBuilder.addStatement(CodeBlock.of("return obj"));

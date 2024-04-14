@@ -185,6 +185,12 @@ public class BeanProcessor {
                         methodParam.qualifier = methodParam.paramName;
                     }
                 }
+                var props = param.getAnnotation(Prop.class);
+                if (props != null) {
+                    methodParam.propsPath = props.value();
+                } else {
+                    methodParam.propsPath = null;
+                }
                 o.params.add(methodParam);
             }
             pendingInjectMethodWithDependencies.add(o);
@@ -436,7 +442,10 @@ public class BeanProcessor {
                 var hasDependency = false;
                 for (var param : pending.params) {
                     String paramBeanName;
-                    if (StringUtil.isNotBlank(param.qualifier)) {
+
+                    if (StringUtil.isNotBlank(param.propsPath)) {
+                        paramBeanName = CodeBlock.of("properties.getProperties($S, $T.class)", param.propsPath, param.paramType).toString();
+                    } else if (StringUtil.isNotBlank(param.qualifier)) {
                         paramBeanName = param.qualifier;
                     } else {
                         // The `beans` contains all bean names already, including method bean with parameters

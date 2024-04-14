@@ -17,6 +17,8 @@ public class PendingInjectMethodWithDependency {
     public static class Param {
         public TypeName paramType;
 
+        public String propsPath;
+
         public String qualifier;
 
         public String paramName;

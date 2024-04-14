@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * To get the properties defined in application.json
  */
-@Target({ElementType.FIELD})
+@Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.SOURCE)
 public @interface Prop {
     String value();
